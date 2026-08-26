@@ -4,7 +4,8 @@
 [build]
   base    = "web"
   command = "npm ci && npm run build"
-  publish = "web/dist"
+  # Relativo a "base", no a la raíz del repositorio.
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"

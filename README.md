@@ -22,8 +22,8 @@ Hoja de cálculo  ──►  Apps Script  ──►  App web (React)
 | `apps-script/` | El código que se pega dentro de la hoja de cálculo y hace de API. |
 | `apps-script/pruebas/` | Banco de pruebas del backend, ejecutable en Node. |
 | `web/` | La aplicación web: React + Vite, sin dependencias de gráficos. |
-| `.github/workflows/` | Publicación automática en GitHub Pages (sólo si el repo es público). |
-| `netlify.toml` | Configuración de despliegue en Netlify, que sí admite repos privados. |
+| `netlify.toml` | Configuración de despliegue en Netlify. Es la vía recomendada. |
+| `.github/workflows/` | Despliegue en GitHub Pages. Requiere Actions habilitado. |
 
 ---
 
@@ -97,87 +97,59 @@ entrar.
 
 ### 4. Publicar la app
 
-**GitHub Pages no sirve aquí mientras el repositorio sea privado**: Pages en
-repos privados es de pago. Si en Settings → Pages te sale *«Upgrade or make this
-repository public to enable Pages»*, es eso. Tienes tres salidas.
+**Usa Netlify.** GitHub Pages queda descartado en este repositorio por dos
+motivos encadenados: Pages no funciona en repos privados sin plan de pago, y
+—aun haciéndolo público— GitHub Actions está bloqueado en esta cuenta, así que
+el workflow no llega ni a registrarse. El workflow sigue en el repositorio por si
+algún día se habilita, pero no cuentes con él.
 
-#### Opción A — Netlify (recomendada)
-
-Gratis, conecta con repositorios privados y el repo se queda privado. Ya está
-todo configurado en [`netlify.toml`](netlify.toml), así que no hay que rellenar
-nada a mano:
+Netlify no necesita Actions: compila en su propia infraestructura, funciona con
+repositorios privados o públicos, y es gratis.
 
 1. Entra en [app.netlify.com](https://app.netlify.com) con tu cuenta de GitHub.
-2. **Add new site → Import an existing project → GitHub**, y elige
-   `HealthWeWearGroup`.
-3. Netlify lee `netlify.toml` y rellena solo la carpeta base, el comando y la
-   carpeta de publicación. Pulsa **Deploy**.
-4. Te queda una URL tipo `https://algo-algo.netlify.app`. En **Site
-   configuration → Change site name** puedes ponerle un nombre decente.
+2. **Add new site → Import an existing project → GitHub**, autoriza el acceso y
+   elige `HealthWeWearGroup`.
+3. Netlify lee [`netlify.toml`](netlify.toml) y rellena solo la carpeta base, el
+   comando y la de publicación. Comprueba que la **rama a desplegar** sea
+   `claude/mobile-weight-tracking-app-wq6ufi` (o `main`, si ya la has creado).
+   Pulsa **Deploy**.
+4. En dos o tres minutos tienes una URL tipo `https://algo-algo.netlify.app`. En
+   **Site configuration → Change site name** puedes ponerle un nombre decente.
 
-Cada push a `main` republica solo.
+A partir de ahí, cada push a esa rama republica solo.
 
-#### Opción B — Cloudflare Pages
+#### Alternativa: Cloudflare Pages
 
-Igual de gratis y también con repos privados. No lee `netlify.toml`, así que
-rellena el formulario con estos cuatro valores:
+También gratis, también sin Actions. No lee `netlify.toml`, así que rellena el
+formulario con estos valores:
 
 | Campo | Valor |
 |---|---|
 | Framework preset | Vite |
+| Root directory | `web` |
 | Build command | `npm ci && npm run build` |
 | Build output directory | `dist` |
-| Root directory | `web` |
 
-Y añade una variable de entorno: `VITE_BASE` = `/`.
+Y añade la variable de entorno `VITE_BASE` = `/`.
 
-#### Opción C — hacer público el repositorio
+#### Cómo saber que ya está publicada
 
-1. **Settings → General**, al final del todo, en *Danger Zone*:
-   **Change repository visibility → Change to public**. Te hará escribir el
-   nombre del repositorio para confirmar.
-2. **Settings → Pages → Source: GitHub Actions**.
-3. Lanza la publicación. Hay dos caminos según cómo tengas el repositorio:
+En Netlify, en **Deploys**: el despliegue más reciente debe poner **Published**
+en verde. Si pone *Failed*, ábrelo y el registro dice en qué paso se rompió.
 
-   **Si aún no existe la rama `main`** (es el caso de un repositorio recién
-   creado, donde la única rama es la de trabajo): no hay nada que fusionar. Ve a
-   la pestaña **Actions → Desplegar la app en GitHub Pages → Run workflow**. El
-   workflow admite ejecución manual justo para esto.
-
-   **Si ya existe `main`**: fusiona la rama de trabajo en `main` desde un pull
-   request. El workflow se dispara solo con cada push a `main`.
-
-La app queda en `https://dolgo88.github.io/HealthWeWearGroup/`.
-
-> **Conviene tener una rama `main`.** Mientras la rama por defecto sea
-> `claude/…`, publicar es siempre a mano. Con `main` como rama por defecto, cada
-> cambio se publica solo. Se crea desde **Actions → Run workflow** una vez, o
-> desde la propia web de GitHub: en el desplegable de ramas escribe `main` y
-> pulsa *Create branch: main from …*; luego **Settings → General → Default
-> branch** y cámbiala a `main`.
-
-**Qué queda expuesto al hacerlo público.** El repositorio no contiene ninguna
-credencial: ni claves, ni tokens, ni contraseñas —esas viven en la hoja, y la
-hoja no está en el repositorio—. Lo único identificable es el **ID de la hoja de
-cálculo**, en la constante `ID_HOJA`. Un ID es un nombre, no una llave: quien lo
-tenga y abra la URL se encuentra un *«Necesitas permiso»*, porque quien decide es
-Drive, no el que conozca la dirección.
-
-#### En cualquiera de las tres
-
-La **web** queda accesible para quien tenga la URL; lo que protege los datos es
-el inicio de sesión, no que la dirección sea difícil de adivinar. Por eso importa
-que las contraseñas de la hoja no sean `1234`.
+#### Sobre la URL de la API
 
 La primera vez que abras la app te pedirá la URL `/exec` del paso 3. Se guarda en
 el dispositivo y no vuelve a preguntarla.
 
 Existe la opción de dejarla ya dentro de la compilación con la variable de
-entorno `VITE_API_URL`, pero **con el repositorio público conviene no hacerlo**.
-El secreto de GitHub no se ve en el repositorio, pero sí acaba escrito dentro del
-JavaScript compilado, y ese fichero lo sirve Pages a cualquiera. Dejando que la
-app la pida, la URL sólo vive en los móviles de quienes la usáis. Es la
-diferencia entre que la puerta esté cerrada y que además no esté señalizada.
+entorno `VITE_API_URL`, pero **con el repositorio público conviene no hacerlo**:
+acabaría escrita dentro del JavaScript compilado, que cualquiera puede leer.
+Dejando que la app la pida, la URL sólo vive en los móviles de quienes la usáis.
+
+La **web** queda accesible para quien tenga la dirección; lo que protege los
+datos es el inicio de sesión, no que la URL sea difícil de adivinar. Por eso
+importa que las contraseñas de la hoja no sean `1234`.
 
 #### En local, sin publicar nada
 
