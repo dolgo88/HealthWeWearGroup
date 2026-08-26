@@ -133,15 +133,21 @@ Y añade una variable de entorno: `VITE_BASE` = `/`.
 
 #### Opción C — hacer público el repositorio
 
-Si lo haces público, GitHub Pages funciona y el workflow que ya está en
-`.github/workflows/desplegar.yml` publica solo. **Settings → Pages → Source:
-GitHub Actions**, y la app queda en
-`https://dolgo88.github.io/HealthWeWearGroup/`.
+1. **Settings → General**, al final del todo, en *Danger Zone*:
+   **Change repository visibility → Change to public**. Te hará escribir el
+   nombre del repositorio para confirmar.
+2. **Settings → Pages → Source: GitHub Actions**.
+3. Fusiona la rama de trabajo en `main`. El workflow se dispara con los push a
+   `main`, así que hasta que no fusiones no se publica nada.
 
-Antes de hacerlo, ten en cuenta que el repositorio contiene el **ID de tu hoja de
-cálculo** (la constante `ID_HOJA`). Ese ID por sí solo no da acceso a nada —la
-hoja sigue siendo privada en tu Drive—, pero es información que prefieres no
-regalar. No hay contraseñas en el repositorio: viven en la hoja.
+La app queda en `https://dolgo88.github.io/HealthWeWearGroup/`.
+
+**Qué queda expuesto al hacerlo público.** El repositorio no contiene ninguna
+credencial: ni claves, ni tokens, ni contraseñas —esas viven en la hoja, y la
+hoja no está en el repositorio—. Lo único identificable es el **ID de la hoja de
+cálculo**, en la constante `ID_HOJA`. Un ID es un nombre, no una llave: quien lo
+tenga y abra la URL se encuentra un *«Necesitas permiso»*, porque quien decide es
+Drive, no el que conozca la dirección.
 
 #### En cualquiera de las tres
 
@@ -150,9 +156,14 @@ el inicio de sesión, no que la dirección sea difícil de adivinar. Por eso imp
 que las contraseñas de la hoja no sean `1234`.
 
 La primera vez que abras la app te pedirá la URL `/exec` del paso 3. Se guarda en
-el dispositivo y no vuelve a preguntarla. Si prefieres dejarla ya dentro de la
-compilación, defínela como variable de entorno `VITE_API_URL` en el panel de
-Netlify o Cloudflare (o como secreto del repositorio, si vas por la opción C).
+el dispositivo y no vuelve a preguntarla.
+
+Existe la opción de dejarla ya dentro de la compilación con la variable de
+entorno `VITE_API_URL`, pero **con el repositorio público conviene no hacerlo**.
+El secreto de GitHub no se ve en el repositorio, pero sí acaba escrito dentro del
+JavaScript compilado, y ese fichero lo sirve Pages a cualquiera. Dejando que la
+app la pida, la URL sólo vive en los móviles de quienes la usáis. Es la
+diferencia entre que la puerta esté cerrada y que además no esté señalizada.
 
 #### En local, sin publicar nada
 
