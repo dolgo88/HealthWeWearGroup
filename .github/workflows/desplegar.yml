@@ -2,7 +2,11 @@ name: Desplegar la app en GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # main y, mientras no exista, la rama de trabajo: sin esto el workflow no
+    # se dispara nunca, porque la rama por defecto del repositorio es la otra.
+    branches:
+      - main
+      - claude/mobile-weight-tracking-app-wq6ufi
     paths: ['web/**', '.github/workflows/desplegar.yml']
   workflow_dispatch:
 
