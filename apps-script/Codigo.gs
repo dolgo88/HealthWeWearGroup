@@ -22,12 +22,65 @@ var COLUMNAS_USUARIOS = [
 ];
 var COLUMNAS_MEDICIONES = ['fecha', 'usuario', 'peso_kg', 'ejercicio', 'nota'];
 
+/**
+ * ID de la hoja de cálculo.
+ *
+ * Sólo se usa como red de seguridad: si el script se creó suelto en
+ * script.google.com en vez de desde Extensiones > Apps Script, no hay
+ * "hoja activa" y hay que abrirla por su ID. Con el script dentro de la
+ * hoja este valor se ignora.
+ *
+ * Es el trozo largo de la URL de la hoja, entre /d/ y /edit.
+ */
+var ID_HOJA = '1NUU0DCMl5NJVjk1iw8bqVlsvdYojDrQNPf2pfnWV0nk';
+
 /* Paleta por defecto que se reparte entre usuarios sin color propio.
    Orden fijo y validado para daltonismo — no lo reordenes a la ligera. */
 var PALETA = [
   '#2a78d6', '#eb6834', '#1baf7a', '#eda100',
   '#e87ba4', '#008300', '#4a3aa7', '#e34948'
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Acceso a la hoja de cálculo                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * La hoja sobre la que trabaja todo el script.
+ *
+ * Si el script vive dentro de la hoja, getActiveSpreadsheet() la devuelve.
+ * Si se creó suelto, no hay hoja activa y se abre por ID. Que funcionen los
+ * dos montajes evita el fallo más habitual al instalarlo.
+ */
+function documento() {
+  var activa = null;
+  try {
+    activa = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (err) {
+    activa = null;
+  }
+  if (activa) return activa;
+
+  if (!ID_HOJA || ID_HOJA.indexOf('PEGA') === 0) {
+    throw new Error(
+      'No hay ninguna hoja de cálculo asociada a este script. Ábrelo desde ' +
+      'la hoja (Extensiones > Apps Script) o pon el ID de la hoja en la ' +
+      'constante ID_HOJA, arriba del todo de Codigo.gs.');
+  }
+
+  try {
+    return SpreadsheetApp.openById(ID_HOJA);
+  } catch (err) {
+    throw new Error('No se pudo abrir la hoja con ID ' + ID_HOJA + ': ' + err.message);
+  }
+}
+
+/** La zona horaria se pide una vez, no una por cada fecha que se lee. */
+var _zonaHoraria = null;
+function zonaHoraria() {
+  if (!_zonaHoraria) _zonaHoraria = documento().getSpreadsheetTimeZone();
+  return _zonaHoraria;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Punto de entrada HTTP                                              */
@@ -302,7 +355,7 @@ function validarToken(token) {
 /* ------------------------------------------------------------------ */
 
 function hojaObligatoria(nombre) {
-  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombre);
+  var hoja = documento().getSheetByName(nombre);
   if (!hoja) {
     throw new Error('Falta la hoja "' + nombre + '". Ejecuta la función configurar() una vez.');
   }
@@ -342,7 +395,7 @@ function normalizarFecha(valor) {
   if (valor === '' || valor === null || valor === undefined) return null;
 
   if (Object.prototype.toString.call(valor) === '[object Date]') {
-    return Utilities.formatDate(valor, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    return Utilities.formatDate(valor, zonaHoraria(), 'yyyy-MM-dd');
   }
 
   var texto = String(valor).trim();

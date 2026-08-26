@@ -20,6 +20,7 @@ Hoja de cálculo  ──►  Apps Script  ──►  App web (React)
 | Carpeta | Qué hay |
 |---|---|
 | `apps-script/` | El código que se pega dentro de la hoja de cálculo y hace de API. |
+| `apps-script/pruebas/` | Banco de pruebas del backend, ejecutable en Node. |
 | `web/` | La aplicación web: React + Vite, sin dependencias de gráficos. |
 | `.github/workflows/` | Publicación automática en GitHub Pages. |
 
@@ -41,6 +42,13 @@ condicionales ya puestos.
 
 ### 2. Instalar el script en la hoja
 
+> **Importante:** entra al editor **desde la hoja**, con *Extensiones → Apps Script*.
+> Si en su lugar creas un proyecto suelto en `script.google.com`, el script no
+> queda asociado a ninguna hoja. Funciona igualmente —`ID_HOJA`, arriba de
+> `Codigo.gs`, ya trae el ID de tu hoja— pero no tendrás el menú
+> **HealthWeWear** dentro de la hoja y tendrás que lanzar las funciones desde
+> el editor.
+
 1. Abre la hoja y ve a **Extensiones → Apps Script**.
 2. Borra el contenido de `Código.gs` y pega el de [`apps-script/Codigo.gs`](apps-script/Codigo.gs).
 3. Pulsa el **+** junto a «Archivos», elige **Secuencia de comandos**, llámalo
@@ -51,7 +59,13 @@ condicionales ya puestos.
    Configuración avanzada → Ir a (no seguro) → Permitir**. Es tu propio script
    pidiéndote acceso a tu propia hoja; ese aviso sale siempre con scripts sin
    verificar.
-6. Vuelve a la hoja: ya tiene las pestañas **Usuarios**, **Mediciones** y **LEEME**.
+6. Vuelve a la hoja y **recárgala** (F5): ya tiene las pestañas **Usuarios**,
+   **Mediciones** y **LEEME**, y arriba aparece el menú **HealthWeWear**.
+
+Si algo no cuadra, ejecuta la función **`comprobar`** desde el editor y mira el
+registro (**Ver → Registro**, o `Ctrl`+`Intro`). Te dice en una línea qué falta:
+si el script está suelto o dentro de la hoja, qué pestañas hay, si las cabeceras
+están bien y quién puede entrar.
 
 ### 3. Publicar el script como API
 
@@ -201,12 +215,21 @@ existente, la URL cambia y hay que volver a ponerla en la app.
 
 **Cambiar la app.** Un push a `main` que toque `web/` republica sola.
 
+**Probar el backend sin tocar la hoja.** `node apps-script/pruebas/simular.mjs`
+ejecuta `Codigo.gs` y `Configurar.gs` en Node contra una hoja simulada y
+comprueba el ciclo completo: creación de pestañas, login, guardado, corrección
+del mismo día y borrado. Con `SUELTO=1` delante simula además el caso del script
+creado fuera de la hoja.
+
 **Problemas frecuentes**
 
 | Síntoma | Causa |
 |---|---|
 | «La API devolvió algo que no es JSON» | La URL no acaba en `/exec`, o la implementación no está en «Cualquier usuario». |
-| «Falta la hoja "Usuarios"» | No se ejecutó `configurar()`. Hazlo desde el menú **HealthWeWear** de la hoja. |
+| `configurar()` no aparece en el desplegable de funciones | Falta el fichero `Configurar.gs`. Son **dos** ficheros, no uno. |
+| `configurar()` se ejecuta pero no aparece ninguna pestaña | El script está suelto y `ID_HOJA` no apunta a tu hoja. Ejecuta `comprobar` para verlo. |
+| No sale el menú **HealthWeWear** en la hoja | Recarga la hoja (F5): `onOpen` sólo corre al abrirla. Si el script está suelto, no habrá menú nunca. |
+| «Falta la hoja "Usuarios"» | No se ejecutó `configurar()`. Hazlo desde el menú **HealthWeWear** o desde el editor. |
 | «Usuario o contraseña incorrectos» con datos correctos | Sobra un espacio en la celda, o `activo` está en `NO`. |
 | La app no ve un cambio hecho a mano en la hoja | Los datos se recargan al abrir la app; ciérrala y vuelve a abrirla. |
 

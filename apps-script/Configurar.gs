@@ -7,15 +7,75 @@
  */
 
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('HealthWeWear')
-    .addItem('Configurar / reparar hojas', 'configurar')
-    .addItem('Añadir filas de ejemplo', 'anadirEjemplos')
-    .addToUi();
+  // Sólo hay menú si el script vive dentro de la hoja. Si se creó suelto,
+  // no hay interfaz que decorar y esto no debe tumbar la apertura.
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu('HealthWeWear')
+      .addItem('Configurar / reparar hojas', 'configurar')
+      .addItem('Añadir filas de ejemplo', 'anadirEjemplos')
+      .addItem('Comprobar instalación', 'comprobar')
+      .addToUi();
+  } catch (err) {
+    Logger.log('Sin interfaz de hoja: ' + err.message);
+  }
+}
+
+/**
+ * Diagnóstico. Ejecútala desde el editor y mira el registro
+ * (Ver > Registro, o Ctrl+Intro): dice exactamente qué falta.
+ */
+function comprobar() {
+  var lineas = [];
+
+  var activa = null;
+  try { activa = SpreadsheetApp.getActiveSpreadsheet(); } catch (err) { activa = null; }
+  lineas.push(activa
+    ? '✓ El script está dentro de la hoja.'
+    : '! El script está suelto: se abrirá la hoja por ID_HOJA (' + ID_HOJA + ').');
+
+  var doc;
+  try {
+    doc = documento();
+  } catch (err) {
+    lineas.push('✗ ' + err.message);
+    Logger.log(lineas.join('\n'));
+    return lineas.join('\n');
+  }
+
+  lineas.push('✓ Hoja: "' + doc.getName() + '" — ' + doc.getUrl());
+  lineas.push('  Pestañas: ' + doc.getSheets().map(function (h) { return h.getName(); }).join(', '));
+
+  [[HOJA_USUARIOS, COLUMNAS_USUARIOS], [HOJA_MEDICIONES, COLUMNAS_MEDICIONES]].forEach(function (par) {
+    var hoja = doc.getSheetByName(par[0]);
+    if (!hoja) {
+      lineas.push('✗ Falta la pestaña "' + par[0] + '". Ejecuta configurar().');
+      return;
+    }
+    try {
+      indiceColumnas(hoja, par[1]);
+      lineas.push('✓ "' + par[0] + '": cabeceras correctas, ' +
+                  Math.max(hoja.getLastRow() - 1, 0) + ' filas de datos.');
+    } catch (err) {
+      lineas.push('✗ "' + par[0] + '": ' + err.message);
+    }
+  });
+
+  try {
+    var activos = leerUsuarios().filter(function (u) { return u.activo; });
+    lineas.push('✓ Usuarios que pueden entrar: ' +
+                (activos.length ? activos.map(function (u) { return u.usuario; }).join(', ') : 'ninguno todavía'));
+  } catch (err) {
+    lineas.push('✗ No se pudieron leer los usuarios: ' + err.message);
+  }
+
+  var texto = lineas.join('\n');
+  Logger.log(texto);
+  return texto;
 }
 
 function configurar() {
-  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var libro = documento();
 
   var usuarios   = prepararHoja(libro, HOJA_USUARIOS,   COLUMNAS_USUARIOS,   [110, 110, 140, 70, 90, 140, 140, 90, 70]);
   var mediciones = prepararHoja(libro, HOJA_MEDICIONES, COLUMNAS_MEDICIONES, [110, 110, 90, 90, 260]);
@@ -31,9 +91,18 @@ function configurar() {
   libro.setActiveSheet(usuarios);
   secreto(); // genera y guarda la clave de firma de sesiones
 
-  SpreadsheetApp.getActiveSpreadsheet().toast(
-    'Hojas listas. Ahora publica el script: Implementar > Nueva implementación > Aplicación web.',
-    'HealthWeWear', 10);
+  var resumen = 'Hojas listas en "' + libro.getName() + '": ' +
+                libro.getSheets().map(function (h) { return h.getName(); }).join(', ') + '. ' +
+                'Ahora publica el script: Implementar > Nueva implementación > Aplicación web.';
+
+  // El toast sólo se ve si la hoja está abierta; el log se ve siempre.
+  Logger.log(resumen);
+  try {
+    libro.toast(resumen, 'HealthWeWear', 10);
+  } catch (err) {
+    /* script suelto: no hay ventana donde mostrarlo */
+  }
+  return resumen;
 }
 
 function prepararHoja(libro, nombre, columnas, anchos) {
@@ -103,7 +172,7 @@ function aplicarLista(hoja, columna, filas, valores) {
 }
 
 function anadirEjemplos() {
-  var libro      = SpreadsheetApp.getActiveSpreadsheet();
+  var libro      = documento();
   var usuarios   = hojaObligatoria(HOJA_USUARIOS);
   var mediciones = hojaObligatoria(HOJA_MEDICIONES);
 
