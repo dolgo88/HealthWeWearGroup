@@ -22,7 +22,8 @@ Hoja de cálculo  ──►  Apps Script  ──►  App web (React)
 | `apps-script/` | El código que se pega dentro de la hoja de cálculo y hace de API. |
 | `apps-script/pruebas/` | Banco de pruebas del backend, ejecutable en Node. |
 | `web/` | La aplicación web: React + Vite, sin dependencias de gráficos. |
-| `.github/workflows/` | Publicación automática en GitHub Pages. |
+| `.github/workflows/` | Publicación automática en GitHub Pages (sólo si el repo es público). |
+| `netlify.toml` | Configuración de despliegue en Netlify, que sí admite repos privados. |
 
 ---
 
@@ -96,19 +97,64 @@ entrar.
 
 ### 4. Publicar la app
 
-**Opción A — GitHub Pages (recomendada).**
+**GitHub Pages no sirve aquí mientras el repositorio sea privado**: Pages en
+repos privados es de pago. Si en Settings → Pages te sale *«Upgrade or make this
+repository public to enable Pages»*, es eso. Tienes tres salidas.
 
-1. En el repositorio: **Settings → Pages → Source: GitHub Actions**.
-2. Fusiona esta rama en `main`. El workflow compila y publica solo.
-3. La app queda en `https://dolgo88.github.io/HealthWeWearGroup/`.
-4. La primera vez te pedirá la URL del paso 3. Se guarda en el móvil y no vuelve
-   a preguntarla.
+#### Opción A — Netlify (recomendada)
 
-Si prefieres que la URL vaya ya dentro de la compilación y no se pida nunca,
-créala como secreto: **Settings → Secrets and variables → Actions → New
-repository secret**, nombre `VITE_API_URL`, valor tu URL `/exec`.
+Gratis, conecta con repositorios privados y el repo se queda privado. Ya está
+todo configurado en [`netlify.toml`](netlify.toml), así que no hay que rellenar
+nada a mano:
 
-**Opción B — en local.**
+1. Entra en [app.netlify.com](https://app.netlify.com) con tu cuenta de GitHub.
+2. **Add new site → Import an existing project → GitHub**, y elige
+   `HealthWeWearGroup`.
+3. Netlify lee `netlify.toml` y rellena solo la carpeta base, el comando y la
+   carpeta de publicación. Pulsa **Deploy**.
+4. Te queda una URL tipo `https://algo-algo.netlify.app`. En **Site
+   configuration → Change site name** puedes ponerle un nombre decente.
+
+Cada push a `main` republica solo.
+
+#### Opción B — Cloudflare Pages
+
+Igual de gratis y también con repos privados. No lee `netlify.toml`, así que
+rellena el formulario con estos cuatro valores:
+
+| Campo | Valor |
+|---|---|
+| Framework preset | Vite |
+| Build command | `npm ci && npm run build` |
+| Build output directory | `dist` |
+| Root directory | `web` |
+
+Y añade una variable de entorno: `VITE_BASE` = `/`.
+
+#### Opción C — hacer público el repositorio
+
+Si lo haces público, GitHub Pages funciona y el workflow que ya está en
+`.github/workflows/desplegar.yml` publica solo. **Settings → Pages → Source:
+GitHub Actions**, y la app queda en
+`https://dolgo88.github.io/HealthWeWearGroup/`.
+
+Antes de hacerlo, ten en cuenta que el repositorio contiene el **ID de tu hoja de
+cálculo** (la constante `ID_HOJA`). Ese ID por sí solo no da acceso a nada —la
+hoja sigue siendo privada en tu Drive—, pero es información que prefieres no
+regalar. No hay contraseñas en el repositorio: viven en la hoja.
+
+#### En cualquiera de las tres
+
+La **web** queda accesible para quien tenga la URL; lo que protege los datos es
+el inicio de sesión, no que la dirección sea difícil de adivinar. Por eso importa
+que las contraseñas de la hoja no sean `1234`.
+
+La primera vez que abras la app te pedirá la URL `/exec` del paso 3. Se guarda en
+el dispositivo y no vuelve a preguntarla. Si prefieres dejarla ya dentro de la
+compilación, defínela como variable de entorno `VITE_API_URL` en el panel de
+Netlify o Cloudflare (o como secreto del repositorio, si vas por la opción C).
+
+#### En local, sin publicar nada
 
 ```bash
 cd web
@@ -226,7 +272,8 @@ sugiere magnitudes que no son.
 Implementar**. Si creas una implementación nueva en vez de actualizar la
 existente, la URL cambia y hay que volver a ponerla en la app.
 
-**Cambiar la app.** Un push a `main` que toque `web/` republica sola.
+**Cambiar la app.** Un push a `main` republica sola, la hospedes donde la
+hospedes.
 
 **Probar el backend sin tocar la hoja.** `node apps-script/pruebas/simular.mjs`
 ejecuta `Codigo.gs` en Node contra una hoja simulada y
