@@ -42,30 +42,43 @@ condicionales ya puestos.
 
 ### 2. Instalar el script en la hoja
 
-> **Importante:** entra al editor **desde la hoja**, con *Extensiones → Apps Script*.
-> Si en su lugar creas un proyecto suelto en `script.google.com`, el script no
-> queda asociado a ninguna hoja. Funciona igualmente —`ID_HOJA`, arriba de
-> `Codigo.gs`, ya trae el ID de tu hoja— pero no tendrás el menú
-> **HealthWeWear** dentro de la hoja y tendrás que lanzar las funciones desde
-> el editor.
+Es **un solo fichero**: [`apps-script/Codigo.gs`](apps-script/Codigo.gs). Todo el
+backend está ahí dentro a propósito, para que no haya piezas que se queden por
+el camino.
 
 1. Abre la hoja y ve a **Extensiones → Apps Script**.
-2. Borra el contenido de `Código.gs` y pega el de [`apps-script/Codigo.gs`](apps-script/Codigo.gs).
-3. Pulsa el **+** junto a «Archivos», elige **Secuencia de comandos**, llámalo
-   `Configurar` y pega dentro [`apps-script/Configurar.gs`](apps-script/Configurar.gs).
-4. Guarda (💾).
-5. Arriba, en el desplegable de funciones, elige **`configurar`** y pulsa **Ejecutar**.
-   Google te pedirá permiso la primera vez: **Revisar permisos → tu cuenta →
-   Configuración avanzada → Ir a (no seguro) → Permitir**. Es tu propio script
-   pidiéndote acceso a tu propia hoja; ese aviso sale siempre con scripts sin
-   verificar.
-6. Vuelve a la hoja y **recárgala** (F5): ya tiene las pestañas **Usuarios**,
-   **Mediciones** y **LEEME**, y arriba aparece el menú **HealthWeWear**.
 
-Si algo no cuadra, ejecuta la función **`comprobar`** desde el editor y mira el
-registro (**Ver → Registro**, o `Ctrl`+`Intro`). Te dice en una línea qué falta:
-si el script está suelto o dentro de la hoja, qué pestañas hay, si las cabeceras
-están bien y quién puede entrar.
+   > Tiene que ser desde la hoja. Si creas un proyecto suelto en
+   > `script.google.com`, el script no queda enlazado a ninguna hoja. Funciona
+   > igual —`ID_HOJA`, arriba de `Codigo.gs`, ya trae el ID de tu hoja— pero no
+   > tendrás el menú **HealthWeWear** dentro de la hoja.
+
+2. Borra todo lo que haya en el editor y pega [`Codigo.gs`](apps-script/Codigo.gs)
+   **entero**.
+3. Guarda con el icono del disquete 💾.
+4. En la barra de arriba hay un desplegable de funciones. Debe poner
+   **`configurar`** (es la primera del fichero, así que sale sola). Pulsa
+   **Ejecutar**.
+5. **La primera vez Google pide permiso, y el aviso asusta más de lo que debe.**
+   El camino es este, y hay que llegar hasta el final:
+
+   > **Revisar permisos** → elige tu cuenta → aparece *«Google no ha verificado
+   > esta aplicación»* → **Configuración avanzada** (abajo a la izquierda, es un
+   > enlace pequeño y es fácil no verlo) → **Ir a HealthWeWear (no seguro)** →
+   > **Permitir**.
+
+   Es tu propio script pidiéndote acceso a tu propia hoja. Ese aviso lo da Google
+   con cualquier script no publicado en su tienda.
+
+6. Al terminar, abajo del editor sale el registro de ejecución. Debe decir
+   *«Hojas listas en "HealthWeWear — Datos": Usuarios, Mediciones, LEEME…»*.
+7. Vuelve a la hoja y **recárgala** (F5): ya tiene las tres pestañas y un menú
+   nuevo llamado **HealthWeWear**.
+
+Si algo no cuadra, ejecuta la función **`comprobar`** y mira el registro
+(**Ver → Registro**, o `Ctrl`+`Intro`). Dice en cinco líneas si el script está
+dentro de la hoja, qué pestañas hay, si las cabeceras están bien y quién puede
+entrar.
 
 ### 3. Publicar el script como API
 
@@ -208,7 +221,7 @@ sugiere magnitudes que no son.
 
 ## Mantenimiento
 
-**Cambiar el código del script.** Edita en el editor de Apps Script y luego
+**Cambiar el código del script.** Pega la versión nueva de `Codigo.gs` y luego
 **Implementar → Gestionar implementaciones → ✏️ → Versión: Nueva versión →
 Implementar**. Si creas una implementación nueva en vez de actualizar la
 existente, la URL cambia y hay que volver a ponerla en la app.
@@ -216,7 +229,7 @@ existente, la URL cambia y hay que volver a ponerla en la app.
 **Cambiar la app.** Un push a `main` que toque `web/` republica sola.
 
 **Probar el backend sin tocar la hoja.** `node apps-script/pruebas/simular.mjs`
-ejecuta `Codigo.gs` y `Configurar.gs` en Node contra una hoja simulada y
+ejecuta `Codigo.gs` en Node contra una hoja simulada y
 comprueba el ciclo completo: creación de pestañas, login, guardado, corrección
 del mismo día y borrado. Con `SUELTO=1` delante simula además el caso del script
 creado fuera de la hoja.
@@ -226,7 +239,8 @@ creado fuera de la hoja.
 | Síntoma | Causa |
 |---|---|
 | «La API devolvió algo que no es JSON» | La URL no acaba en `/exec`, o la implementación no está en «Cualquier usuario». |
-| `configurar()` no aparece en el desplegable de funciones | Falta el fichero `Configurar.gs`. Son **dos** ficheros, no uno. |
+| `configurar` no aparece en el desplegable de funciones | El pegado se quedó corto. Borra todo el editor y vuelve a pegar `Codigo.gs` entero; `configurar` es la primera función del fichero. |
+| Se ejecuta y no pasa nada, sin error | Se abandonó el diálogo de permisos. Vuelve a Ejecutar y llega hasta **Permitir**, pasando por *Configuración avanzada*. |
 | `configurar()` se ejecuta pero no aparece ninguna pestaña | El script está suelto y `ID_HOJA` no apunta a tu hoja. Ejecuta `comprobar` para verlo. |
 | No sale el menú **HealthWeWear** en la hoja | Recarga la hoja (F5): `onOpen` sólo corre al abrirla. Si el script está suelto, no habrá menú nunca. |
 | «Falta la hoja "Usuarios"» | No se ejecutó `configurar()`. Hazlo desde el menú **HealthWeWear** o desde el editor. |

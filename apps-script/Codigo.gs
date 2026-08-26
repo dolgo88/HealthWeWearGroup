@@ -1,16 +1,32 @@
 /**
- * HealthWeWear — API de seguimiento de peso sobre Google Sheets.
+ * HealthWeWear — seguimiento de peso en grupo sobre esta hoja de cálculo.
  *
- * Este script vive dentro de la propia hoja de cálculo y se publica como
- * aplicación web. La app móvil habla con él por HTTPS enviando JSON.
+ * TODO el backend está en este único fichero, a propósito: se pega entero y
+ * ya está, sin ficheros extra que se puedan quedar por el camino.
  *
- * Puesta en marcha (una sola vez):
- *   1. Ejecuta la función  configurar()  desde el editor.
- *   2. Implementar > Nueva implementación > Aplicación web
- *        Ejecutar como:        Yo
- *        Quién tiene acceso:   Cualquier usuario
- *   3. Copia la URL /exec y pégala en la app.
+ * PUESTA EN MARCHA (una sola vez)
+ *
+ *   1. Pega este fichero entero en Extensiones > Apps Script, sustituyendo
+ *      lo que hubiera, y guarda con el icono del disquete.
+ *
+ *   2. Arriba hay un desplegable de funciones: debe poner "configurar".
+ *      Pulsa Ejecutar. Google te pedirá permiso la primera vez:
+ *        Revisar permisos > tu cuenta > Configuración avanzada >
+ *        Ir a HealthWeWear (no seguro) > Permitir
+ *      Es tu propio script pidiendo acceso a tu propia hoja; ese aviso sale
+ *      siempre con scripts sin verificar.
+ *
+ *   3. Vuelve a la hoja y recárgala (F5). Debe tener las pestañas Usuarios,
+ *      Mediciones y LEEME, y un menú nuevo llamado HealthWeWear.
+ *
+ *   4. Publica la API: Implementar > Nueva implementación > (engranaje)
+ *      Aplicación web > Ejecutar como: Yo > Acceso: Cualquier usuario >
+ *      Implementar. Copia la URL que acaba en /exec y pégala en la app.
+ *
+ * ¿Algo no cuadra? Ejecuta la función "comprobar" y mira el registro
+ * (Ver > Registro). Dice en cinco líneas qué falta.
  */
+
 
 var HOJA_USUARIOS   = 'Usuarios';
 var HOJA_MEDICIONES = 'Mediciones';
@@ -45,6 +61,263 @@ var PALETA = [
 /*  Acceso a la hoja de cálculo                                        */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Instalación — ejecuta configurar() una vez                      */
+/* ------------------------------------------------------------------ */
+
+
+function configurar() {
+  var libro = documento();
+
+  var usuarios   = prepararHoja(libro, HOJA_USUARIOS,   COLUMNAS_USUARIOS,   [110, 110, 140, 70, 90, 140, 140, 90, 70]);
+  var mediciones = prepararHoja(libro, HOJA_MEDICIONES, COLUMNAS_MEDICIONES, [110, 110, 90, 90, 260]);
+  prepararLeeme(libro);
+
+  // Sobra la hoja por defecto que trae todo libro nuevo.
+  var sobrante = libro.getSheetByName('Hoja 1') || libro.getSheetByName('Sheet1') || libro.getSheetByName('Hoja1');
+  if (sobrante && libro.getSheets().length > 1) libro.deleteSheet(sobrante);
+
+  formatearUsuarios(usuarios);
+  formatearMediciones(mediciones);
+
+  libro.setActiveSheet(usuarios);
+  secreto(); // genera y guarda la clave de firma de sesiones
+
+  var resumen = 'Hojas listas en "' + libro.getName() + '": ' +
+                libro.getSheets().map(function (h) { return h.getName(); }).join(', ') + '. ' +
+                'Ahora publica el script: Implementar > Nueva implementación > Aplicación web.';
+
+  // El toast sólo se ve si la hoja está abierta; el log se ve siempre.
+  Logger.log(resumen);
+  try {
+    libro.toast(resumen, 'HealthWeWear', 10);
+  } catch (err) {
+    /* script suelto: no hay ventana donde mostrarlo */
+  }
+  return resumen;
+}
+
+/**
+ * Diagnóstico. Ejecútala desde el editor y mira el registro
+ * (Ver > Registro, o Ctrl+Intro): dice exactamente qué falta.
+ */
+function comprobar() {
+  var lineas = [];
+
+  var activa = null;
+  try { activa = SpreadsheetApp.getActiveSpreadsheet(); } catch (err) { activa = null; }
+  lineas.push(activa
+    ? '✓ El script está dentro de la hoja.'
+    : '! El script está suelto: se abrirá la hoja por ID_HOJA (' + ID_HOJA + ').');
+
+  var doc;
+  try {
+    doc = documento();
+  } catch (err) {
+    lineas.push('✗ ' + err.message);
+    Logger.log(lineas.join('\n'));
+    return lineas.join('\n');
+  }
+
+  lineas.push('✓ Hoja: "' + doc.getName() + '" — ' + doc.getUrl());
+  lineas.push('  Pestañas: ' + doc.getSheets().map(function (h) { return h.getName(); }).join(', '));
+
+  [[HOJA_USUARIOS, COLUMNAS_USUARIOS], [HOJA_MEDICIONES, COLUMNAS_MEDICIONES]].forEach(function (par) {
+    var hoja = doc.getSheetByName(par[0]);
+    if (!hoja) {
+      lineas.push('✗ Falta la pestaña "' + par[0] + '". Ejecuta configurar().');
+      return;
+    }
+    try {
+      indiceColumnas(hoja, par[1]);
+      lineas.push('✓ "' + par[0] + '": cabeceras correctas, ' +
+                  Math.max(hoja.getLastRow() - 1, 0) + ' filas de datos.');
+    } catch (err) {
+      lineas.push('✗ "' + par[0] + '": ' + err.message);
+    }
+  });
+
+  try {
+    var activos = leerUsuarios().filter(function (u) { return u.activo; });
+    lineas.push('✓ Usuarios que pueden entrar: ' +
+                (activos.length ? activos.map(function (u) { return u.usuario; }).join(', ') : 'ninguno todavía'));
+  } catch (err) {
+    lineas.push('✗ No se pudieron leer los usuarios: ' + err.message);
+  }
+
+  var texto = lineas.join('\n');
+  Logger.log(texto);
+  return texto;
+}
+
+function anadirEjemplos() {
+  var libro      = documento();
+  var usuarios   = hojaObligatoria(HOJA_USUARIOS);
+  var mediciones = hojaObligatoria(HOJA_MEDICIONES);
+
+  if (usuarios.getLastRow() > 1) {
+    libro.toast('La hoja Usuarios ya tiene datos: no toco nada.', 'HealthWeWear', 6);
+    return;
+  }
+
+  usuarios.getRange(2, 1, 2, COLUMNAS_USUARIOS.length).setValues([
+    ['ana',  'cambiame', 'Ana',  'F', 165, '1990-04-12', 60, '#2a78d6', 'SI'],
+    ['luis', 'cambiame', 'Luis', 'M', 178, '1988-11-03', 78, '#eb6834', 'SI']
+  ]);
+
+  var hoy   = new Date();
+  var filas = [];
+  for (var d = 13; d >= 0; d--) {
+    var f = new Date(hoy.getTime() - d * 86400000);
+    var iso = Utilities.formatDate(f, libro.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    filas.push([iso, 'ana',  Math.round((65.5 - (13 - d) * 0.08) * 10) / 10, d % 3 ? 'SI' : 'NO', '']);
+    filas.push([iso, 'luis', Math.round((84.0 - (13 - d) * 0.11) * 10) / 10, d % 2 ? 'SI' : 'NO', '']);
+  }
+  mediciones.getRange(2, 1, filas.length, COLUMNAS_MEDICIONES.length).setValues(filas);
+
+  libro.toast('Añadidos 2 usuarios de ejemplo (contraseña: cambiame) y 14 días de datos.', 'HealthWeWear', 8);
+}
+
+function onOpen() {
+  // Sólo hay menú si el script vive dentro de la hoja. Si se creó suelto,
+  // no hay interfaz que decorar y esto no debe tumbar la apertura.
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu('HealthWeWear')
+      .addItem('Configurar / reparar hojas', 'configurar')
+      .addItem('Añadir filas de ejemplo', 'anadirEjemplos')
+      .addItem('Comprobar instalación', 'comprobar')
+      .addToUi();
+  } catch (err) {
+    Logger.log('Sin interfaz de hoja: ' + err.message);
+  }
+}
+
+/**
+ * Diagnóstico. Ejecútala desde el editor y mira el registro
+ * (Ver > Registro, o Ctrl+Intro): dice exactamente qué falta.
+ */
+
+/* ------------------------------------------------------------------ */
+/*  Construcción de las hojas                                       */
+/* ------------------------------------------------------------------ */
+
+
+function prepararHoja(libro, nombre, columnas, anchos) {
+  var hoja = libro.getSheetByName(nombre) || libro.insertSheet(nombre);
+
+  hoja.getRange(1, 1, 1, columnas.length)
+      .setValues([columnas])
+      .setFontWeight('bold')
+      .setFontColor('#ffffff')
+      .setBackground('#1f3a5f')
+      .setHorizontalAlignment('center')
+      .setVerticalAlignment('middle');
+
+  hoja.setFrozenRows(1);
+  hoja.getRange(1, 1, 1, columnas.length).setWrap(true);
+  anchos.forEach(function (ancho, i) { hoja.setColumnWidth(i + 1, ancho); });
+
+  return hoja;
+}
+
+function formatearUsuarios(hoja) {
+  var filas = Math.max(hoja.getMaxRows() - 1, 1);
+  var col   = function (nombre) { return COLUMNAS_USUARIOS.indexOf(nombre) + 1; };
+
+  hoja.getRange(2, col('fecha_nacimiento'), filas, 1).setNumberFormat('yyyy-mm-dd');
+  hoja.getRange(2, col('altura_cm'),        filas, 1).setNumberFormat('0');
+  hoja.getRange(2, col('peso_objetivo_kg'), filas, 1).setNumberFormat('0.0');
+
+  aplicarLista(hoja, col('sexo'),   filas, ['M', 'F']);
+  aplicarLista(hoja, col('activo'), filas, ['SI', 'NO']);
+
+  // La contraseña en claro es intencionada: la idea es poder cambiarla aquí a mano.
+  hoja.getRange(2, col('password'), filas, 1).setNote(
+    'Contraseña en texto claro para poder editarla a mano.\n' +
+    'No reutilices aquí una contraseña que uses en otro sitio.');
+}
+
+function formatearMediciones(hoja) {
+  var filas = Math.max(hoja.getMaxRows() - 1, 1);
+  var col   = function (nombre) { return COLUMNAS_MEDICIONES.indexOf(nombre) + 1; };
+
+  hoja.getRange(2, col('fecha'),   filas, 1).setNumberFormat('yyyy-mm-dd');
+  hoja.getRange(2, col('peso_kg'), filas, 1).setNumberFormat('0.0');
+  aplicarLista(hoja, col('ejercicio'), filas, ['SI', 'NO']);
+
+  // Verde para el día con ejercicio, gris para el que no: se lee de un vistazo.
+  var rango = hoja.getRange(2, col('ejercicio'), filas, 1);
+  rango.clearFormat();
+  rango.setNumberFormat('@');
+  hoja.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('SI').setBackground('#d8f0d8').setFontColor('#0b5c0b')
+      .setRanges([rango]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('NO').setBackground('#f0f0ee').setFontColor('#6b6b66')
+      .setRanges([rango]).build()
+  ]);
+}
+
+function aplicarLista(hoja, columna, filas, valores) {
+  var regla = SpreadsheetApp.newDataValidation()
+    .requireValueInList(valores, true)
+    .setAllowInvalid(false)
+    .setHelpText('Valores admitidos: ' + valores.join(' o '))
+    .build();
+  hoja.getRange(2, columna, filas, 1).setDataValidation(regla);
+}
+
+function prepararLeeme(libro) {
+  var hoja = libro.getSheetByName('LEEME') || libro.insertSheet('LEEME');
+  hoja.clear();
+
+  var lineas = [
+    ['HealthWeWear — guía de esta hoja', ''],
+    ['', ''],
+    ['Esta hoja es la base de datos de la app. Puedes editarla a mano cuando quieras.', ''],
+    ['No cambies los nombres de las hojas ni el texto de la fila 1: la app los busca por ese nombre.', ''],
+    ['Sí puedes reordenar columnas o insertar columnas nuevas — se localizan por su cabecera.', ''],
+    ['', ''],
+    ['HOJA "Usuarios" — una fila por persona', ''],
+    ['usuario',          'Nombre de acceso, sin espacios. Al entrar no distingue mayúsculas.'],
+    ['password',         'Contraseña de acceso, en texto claro para que puedas cambiarla aquí.'],
+    ['nombre',           'Nombre que se muestra en la app.'],
+    ['sexo',             'M o F. Se usa para calcular el metabolismo basal.'],
+    ['altura_cm',        'Altura en centímetros, ej. 165. Se usa para el IMC.'],
+    ['fecha_nacimiento', 'AAAA-MM-DD, ej. 1990-04-12. Da la edad para el metabolismo basal.'],
+    ['peso_objetivo_kg', 'Peso al que quiere llegar. Puedes dejarlo vacío.'],
+    ['color',            'Color de esa persona en los gráficos, ej. #2a78d6. Vacío = color automático.'],
+    ['activo',           'SI o NO. Pon NO para quitarle el acceso sin borrar su historial.'],
+    ['', ''],
+    ['HOJA "Mediciones" — una fila por persona y día', ''],
+    ['fecha',     'Día de la medición, AAAA-MM-DD.'],
+    ['usuario',   'Debe coincidir con un "usuario" de la hoja Usuarios.'],
+    ['peso_kg',   'Peso en kilos. Vale punto o coma decimal: 64.5 o 64,5.'],
+    ['ejercicio', 'SI o NO.'],
+    ['nota',      'Texto libre, opcional.'],
+    ['', ''],
+    ['Si alguien guarda dos veces el mismo día, la app actualiza esa fila en vez de crear otra.', ''],
+    ['Así siempre hay como mucho una medición por persona y día.', '']
+  ];
+
+  hoja.getRange(1, 1, lineas.length, 2).setValues(lineas);
+  hoja.setColumnWidth(1, 170);
+  hoja.setColumnWidth(2, 620);
+  hoja.getRange('A1').setFontSize(14).setFontWeight('bold').setFontColor('#1f3a5f');
+  hoja.getRange('A7').setFontWeight('bold').setFontColor('#1f3a5f');
+  hoja.getRange('A18').setFontWeight('bold').setFontColor('#1f3a5f');
+  hoja.getRange(1, 1, lineas.length, 1).setFontWeight('bold');
+  hoja.getRange('A1').setFontSize(14);
+  hoja.setFrozenRows(0);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Acceso a la hoja de cálculo                                     */
+/* ------------------------------------------------------------------ */
+
+
 /**
  * La hoja sobre la que trabaja todo el script.
  *
@@ -77,6 +350,7 @@ function documento() {
 
 /** La zona horaria se pide una vez, no una por cada fecha que se lee. */
 var _zonaHoraria = null;
+
 function zonaHoraria() {
   if (!_zonaHoraria) _zonaHoraria = documento().getSpreadsheetTimeZone();
   return _zonaHoraria;
@@ -85,6 +359,11 @@ function zonaHoraria() {
 /* ------------------------------------------------------------------ */
 /*  Punto de entrada HTTP                                              */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  API HTTP                                                        */
+/* ------------------------------------------------------------------ */
+
 
 function doPost(e) {
   try {
@@ -231,12 +510,19 @@ function accionBorrar(p) {
 /*  Lectura de datos                                                   */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Lectura de datos                                                */
+/* ------------------------------------------------------------------ */
+
+
 function instantanea() {
   return {
     usuarios:   leerUsuarios().filter(function (u) { return u.activo; }).map(publico),
     mediciones: leerMediciones()
   };
 }
+
+/** Quita la contraseña antes de que nada salga hacia la app. */
 
 /** Quita la contraseña antes de que nada salga hacia la app. */
 function publico(u) {
@@ -310,6 +596,11 @@ function leerMediciones() {
 /*  Sesiones                                                           */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Sesiones                                                        */
+/* ------------------------------------------------------------------ */
+
+
 function secreto() {
   var props = PropertiesService.getScriptProperties();
   var s = props.getProperty('SECRETO');
@@ -354,6 +645,11 @@ function validarToken(token) {
 /*  Utilidades de hoja                                                 */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Utilidades de hoja                                              */
+/* ------------------------------------------------------------------ */
+
+
 function hojaObligatoria(nombre) {
   var hoja = documento().getSheetByName(nombre);
   if (!hoja) {
@@ -361,6 +657,11 @@ function hojaObligatoria(nombre) {
   }
   return hoja;
 }
+
+/**
+ * Localiza cada columna por el texto de su cabecera, no por su posición.
+ * Así puedes reordenar o insertar columnas en la hoja sin romper la app.
+ */
 
 /**
  * Localiza cada columna por el texto de su cabecera, no por su posición.
@@ -389,6 +690,8 @@ function normalizarNumero(valor) {
   var n = parseFloat(String(valor).replace(',', '.').replace(/[^0-9.\-]/g, ''));
   return isNaN(n) ? null : n;
 }
+
+/** Devuelve siempre AAAA-MM-DD, venga la fecha como texto o como celda de fecha. */
 
 /** Devuelve siempre AAAA-MM-DD, venga la fecha como texto o como celda de fecha. */
 function normalizarFecha(valor) {

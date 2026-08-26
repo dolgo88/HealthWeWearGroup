@@ -120,8 +120,14 @@ const contexto = {
   console
 };
 vm.createContext(contexto);
-for (const f of ['apps-script/Codigo.gs', 'apps-script/Configurar.gs']) {
-  vm.runInContext(fs.readFileSync(f, 'utf8'), contexto, { filename: f });
+vm.runInContext(fs.readFileSync('apps-script/Codigo.gs', 'utf8'), contexto, { filename: 'Codigo.gs' });
+
+// El desplegable de funciones de Apps Script se queda con la primera del
+// fichero, así que configurar() tiene que seguir siendo esa.
+const primera = /^function (\w+)/m.exec(fs.readFileSync('apps-script/Codigo.gs', 'utf8'))[1];
+if (primera !== 'configurar') {
+  console.log(`✗ la primera función del fichero es ${primera}, debería ser configurar`);
+  process.exitCode = 1;
 }
 
 const post = (cuerpo) => JSON.parse(contexto.doPost({ postData: { contents: JSON.stringify(cuerpo) } })._texto);
