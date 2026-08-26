@@ -22,8 +22,9 @@ Hoja de cálculo  ──►  Apps Script  ──►  App web (React)
 | `apps-script/` | El código que se pega dentro de la hoja de cálculo y hace de API. |
 | `apps-script/pruebas/` | Banco de pruebas del backend, ejecutable en Node. |
 | `web/` | La aplicación web: React + Vite, sin dependencias de gráficos. |
-| `netlify.toml` | Configuración de despliegue en Netlify. Es la vía recomendada. |
-| `.github/workflows/` | Despliegue en GitHub Pages. Requiere Actions habilitado. |
+| `docs/` | La app ya compilada. Es lo que sirve GitHub Pages. |
+| `netlify.toml` | Despliegue alternativo en Netlify, que compila él mismo. |
+| `.github/workflows/` | Despliegue automático. Sólo sirve con Actions habilitado. |
 
 ---
 
@@ -97,55 +98,55 @@ entrar.
 
 ### 4. Publicar la app
 
-**Usa Netlify.** GitHub Pages queda descartado en este repositorio por dos
-motivos encadenados: Pages no funciona en repos privados sin plan de pago, y
-—aun haciéndolo público— GitHub Actions está bloqueado en esta cuenta, así que
-el workflow no llega ni a registrarse. El workflow sigue en el repositorio por si
-algún día se habilita, pero no cuentes con él.
+En este repositorio **GitHub Actions está bloqueado** (política de la cuenta): un
+push que toca el propio workflow no llega ni a registrarlo. Así que el workflow
+de `.github/workflows/` no sirve aquí, y hay que usar el **otro** modo de
+GitHub Pages, el que sirve ficheros ya compilados sin pasar por Actions.
 
-Netlify no necesita Actions: compila en su propia infraestructura, funciona con
-repositorios privados o públicos, y es gratis.
+La carpeta [`docs/`](docs) contiene la app ya compilada y está en el
+repositorio a propósito. Normalmente no se sube el resultado de una compilación,
+pero sin Actions es la única forma de publicar sin depender de un servicio
+externo.
 
-1. Entra en [app.netlify.com](https://app.netlify.com) con tu cuenta de GitHub.
-2. **Add new site → Import an existing project → GitHub**, autoriza el acceso y
-   elige `HealthWeWearGroup`.
-3. Netlify lee [`netlify.toml`](netlify.toml) y rellena solo la carpeta base, el
-   comando y la de publicación. Comprueba que la **rama a desplegar** sea
-   `claude/mobile-weight-tracking-app-wq6ufi` (o `main`, si ya la has creado).
-   Pulsa **Deploy**.
-4. En dos o tres minutos tienes una URL tipo `https://algo-algo.netlify.app`. En
-   **Site configuration → Change site name** puedes ponerle un nombre decente.
+1. **Settings → Pages**.
+2. En *Source* elige **Deploy from a branch**.
+3. En *Branch*: la rama `claude/mobile-weight-tracking-app-wq6ufi` (o `main`, si
+   la creas) y, en la carpeta, **`/docs`**. Pulsa **Save**.
+4. Espera un par de minutos y recarga esa misma página de Settings: arriba
+   aparecerá un recuadro verde con *«Your site is live at
+   https://dolgo88.github.io/HealthWeWearGroup/»*. Ése es el aviso de que ya está
+   publicada.
 
-A partir de ahí, cada push a esa rama republica solo.
+#### Cuando cambies la app
 
-#### Alternativa: Cloudflare Pages
+`docs/` no se regenera sola. Desde la carpeta `web`:
 
-También gratis, también sin Actions. No lee `netlify.toml`, así que rellena el
-formulario con estos valores:
+```bash
+npm run publicar
+```
 
-| Campo | Valor |
-|---|---|
-| Framework preset | Vite |
-| Root directory | `web` |
-| Build command | `npm ci && npm run build` |
-| Build output directory | `dist` |
+Compila y deja el resultado en `docs/`. Luego un commit y un push, y Pages lo
+recoge en un par de minutos.
 
-Y añade la variable de entorno `VITE_BASE` = `/`.
+#### Si prefieres no subir la compilación
 
-#### Cómo saber que ya está publicada
-
-En Netlify, en **Deploys**: el despliegue más reciente debe poner **Published**
-en verde. Si pone *Failed*, ábrelo y el registro dice en qué paso se rompió.
+Netlify y Cloudflare Pages compilan ellos y no necesitan Actions ni la carpeta
+`docs/`. [`netlify.toml`](netlify.toml) ya está configurado: en
+[app.netlify.com](https://app.netlify.com), *Add new site → Import an existing
+project → GitHub*, eliges el repositorio y compruebas que la rama a desplegar sea
+la de trabajo. En Cloudflare el formulario se rellena con *Root directory* `web`,
+*Build command* `npm ci && npm run build`, *Build output* `dist` y la variable
+`VITE_BASE` = `/`.
 
 #### Sobre la URL de la API
 
 La primera vez que abras la app te pedirá la URL `/exec` del paso 3. Se guarda en
 el dispositivo y no vuelve a preguntarla.
 
-Existe la opción de dejarla ya dentro de la compilación con la variable de
-entorno `VITE_API_URL`, pero **con el repositorio público conviene no hacerlo**:
-acabaría escrita dentro del JavaScript compilado, que cualquiera puede leer.
-Dejando que la app la pida, la URL sólo vive en los móviles de quienes la usáis.
+Existe la opción de dejarla dentro de la compilación con la variable
+`VITE_API_URL`, pero **con el repositorio público conviene no hacerlo**: acabaría
+escrita en el JavaScript que cualquiera puede leer. Dejando que la app la pida,
+la URL sólo vive en los móviles de quienes la usáis.
 
 La **web** queda accesible para quien tenga la dirección; lo que protege los
 datos es el inicio de sesión, no que la URL sea difícil de adivinar. Por eso
