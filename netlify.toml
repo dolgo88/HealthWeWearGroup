@@ -1,0 +1,19 @@
+# Despliegue en Netlify. Sirve también de referencia para Cloudflare Pages:
+# allí se rellenan los mismos cuatro valores en el formulario de la web.
+
+[build]
+  base    = "web"
+  command = "npm ci && npm run build"
+  publish = "web/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Netlify y Cloudflare sirven en la raíz del dominio, no bajo /<repo>/
+  # como hace GitHub Pages.
+  VITE_BASE = "/"
+
+# Sin esto, recargar la página con la app instalada da un 404.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
