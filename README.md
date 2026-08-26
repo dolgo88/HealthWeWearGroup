@@ -137,10 +137,24 @@ Y añade una variable de entorno: `VITE_BASE` = `/`.
    **Change repository visibility → Change to public**. Te hará escribir el
    nombre del repositorio para confirmar.
 2. **Settings → Pages → Source: GitHub Actions**.
-3. Fusiona la rama de trabajo en `main`. El workflow se dispara con los push a
-   `main`, así que hasta que no fusiones no se publica nada.
+3. Lanza la publicación. Hay dos caminos según cómo tengas el repositorio:
+
+   **Si aún no existe la rama `main`** (es el caso de un repositorio recién
+   creado, donde la única rama es la de trabajo): no hay nada que fusionar. Ve a
+   la pestaña **Actions → Desplegar la app en GitHub Pages → Run workflow**. El
+   workflow admite ejecución manual justo para esto.
+
+   **Si ya existe `main`**: fusiona la rama de trabajo en `main` desde un pull
+   request. El workflow se dispara solo con cada push a `main`.
 
 La app queda en `https://dolgo88.github.io/HealthWeWearGroup/`.
+
+> **Conviene tener una rama `main`.** Mientras la rama por defecto sea
+> `claude/…`, publicar es siempre a mano. Con `main` como rama por defecto, cada
+> cambio se publica solo. Se crea desde **Actions → Run workflow** una vez, o
+> desde la propia web de GitHub: en el desplegable de ramas escribe `main` y
+> pulsa *Create branch: main from …*; luego **Settings → General → Default
+> branch** y cámbiala a `main`.
 
 **Qué queda expuesto al hacerlo público.** El repositorio no contiene ninguna
 credencial: ni claves, ni tokens, ni contraseñas —esas viven en la hoja, y la
