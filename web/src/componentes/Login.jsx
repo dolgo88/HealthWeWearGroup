@@ -59,9 +59,16 @@ export default function Login({ alEntrar, alCambiarUrl }) {
         </button>
 
         {!urlFijadaEnCompilacion() && (
-          <button type="button" className="enlace centrado" onClick={alCambiarUrl}>
-            Cambiar la hoja conectada
-          </button>
+          <details className="ayuda-larga">
+            <summary>Problemas para entrar</summary>
+            <p>
+              La app ya viene apuntando a la hoja del grupo. Sólo si te han dado
+              otra dirección distinta hace falta cambiarla.
+            </p>
+            <button type="button" className="enlace" onClick={alCambiarUrl}>
+              Cambiar la hoja conectada
+            </button>
+          </details>
         )}
       </form>
     </main>

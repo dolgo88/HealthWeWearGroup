@@ -555,6 +555,126 @@ code {
 .ficha.activa { color: var(--ink-1); font-weight: 600; }
 
 /* ------------------------------------------------------------------ */
+/*  Avatares                                                           */
+/* ------------------------------------------------------------------ */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid;
+  background: var(--elevado);
+  overflow: hidden;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.avatar-boton { padding: 0; cursor: pointer; }
+
+.avatar-previa { display: flex; justify-content: center; padding: 4px 0 8px; }
+
+.saludo { display: flex; align-items: center; gap: 12px; }
+
+/* ------------------------------------------------------------------ */
+/*  Hoja emergente                                                     */
+/* ------------------------------------------------------------------ */
+
+.velo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 10;
+}
+
+.hoja {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: var(--superficie);
+  border-radius: var(--radio) var(--radio) 0 0;
+  padding: 10px 18px calc(20px + env(safe-area-inset-bottom));
+}
+
+.hoja-asa {
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--eje);
+  margin: 2px auto 10px;
+}
+
+.hoja h4 { font-size: 0.85rem; color: var(--ink-2); margin-top: 10px; }
+
+/* La acción principal se queda pegada al fondo de la hoja, siempre visible. */
+.hoja button.principal {
+  position: sticky;
+  bottom: 0;
+  margin-top: 14px;
+  box-shadow: 0 -8px 12px -8px rgba(0, 0, 0, 0.25);
+}
+
+.acciones-avatar { display: flex; gap: 8px; }
+
+.acciones-avatar button,
+.fila-personalizado button {
+  flex: 1;
+  font: inherit;
+  font-size: 0.9rem;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--eje);
+  border-radius: var(--radio-s);
+  background: var(--elevado);
+  color: var(--ink-1);
+  cursor: pointer;
+}
+
+.acciones-avatar button:disabled,
+.fila-personalizado button:disabled { opacity: 0.45; cursor: default; }
+
+.rejilla-emojis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 4px;
+  /* La rejilla se desplaza dentro de sí misma: si creciera, empujaría el
+     botón de Guardar fuera de la pantalla. */
+  max-height: 27dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rejilla-emojis .emoji {
+  aspect-ratio: 1;
+  font-size: 1.4rem;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radio-s);
+  background: none;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.rejilla-emojis .emoji.activo {
+  border-color: var(--acento);
+  background: var(--acento-lavado);
+}
+
+.fila-personalizado { display: flex; gap: 8px; align-items: center; }
+.fila-personalizado input { flex: 1; text-align: center; font-size: 1.2rem; }
+.fila-personalizado button { flex: 0 0 84px; }
+
+/* ------------------------------------------------------------------ */
 /*  Tablas                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -591,7 +711,7 @@ th[scope='row'], thead th:first-child {
   color: var(--ink-1);
 }
 
-th[scope='row'] { display: flex; align-items: center; gap: 6px; }
+th[scope='row'] { display: flex; align-items: center; gap: 8px; }
 
 tr.fila-propia { background: var(--acento-lavado); }
 

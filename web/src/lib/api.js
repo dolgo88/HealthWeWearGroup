@@ -6,16 +6,19 @@
  * Apps Script no sabe responder. El cuerpo sigue siendo JSON.
  */
 
+import { URL_API_POR_DEFECTO } from './config.js';
+
 const CLAVE_URL     = 'hww.apiUrl';
 const CLAVE_SESION  = 'hww.sesion';
 
 export function urlApi() {
-  const deEntorno = import.meta.env.VITE_API_URL;
-  if (deEntorno) return deEntorno;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   try {
-    return localStorage.getItem(CLAVE_URL) || '';
+    // Una URL puesta a mano manda sobre la de fábrica: permite apuntar a otra
+    // hoja sin recompilar.
+    return localStorage.getItem(CLAVE_URL) || URL_API_POR_DEFECTO;
   } catch {
-    return '';
+    return URL_API_POR_DEFECTO;
   }
 }
 
@@ -25,6 +28,14 @@ export function guardarUrlApi(url) {
 
 export function urlFijadaEnCompilacion() {
   return Boolean(import.meta.env.VITE_API_URL);
+}
+
+export function restaurarUrlPorDefecto() {
+  try {
+    localStorage.removeItem(CLAVE_URL);
+  } catch {
+    /* nada que hacer */
+  }
 }
 
 export class ErrorApi extends Error {

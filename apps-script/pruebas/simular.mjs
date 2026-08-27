@@ -160,6 +160,21 @@ paso('no pisa datos existentes al repetir', () => {
 
 console.log('\n--- comprobar() ---');
 paso('comprobar() se ejecuta', () => contexto.comprobar());
+paso('la hoja Usuarios tiene la columna avatar', () => {
+  const c = libro.getSheetByName('Usuarios').getRange(1, 1, 1, 10).getValues()[0];
+  if (c[9] !== 'avatar') throw new Error('cabeceras: ' + c.join('|'));
+});
+paso('configurar() no pisa columnas ya existentes', () => {
+  // Simula una hoja anterior: se le quita avatar y se añade una columna propia.
+  const h = libro.getSheetByName('Usuarios');
+  h.getRange(1, 10).setValue('mi_columna');
+  h.getRange(2, 10).setValue('valor mío');
+  contexto.configurar();
+  const c = h.getRange(1, 1, 1, 11).getValues()[0];
+  if (c[9] !== 'mi_columna') throw new Error('pisó la columna del usuario: ' + c.join('|'));
+  if (c[10] !== 'avatar') throw new Error('no añadió avatar al final: ' + c.join('|'));
+  if (h.getRange(2, 10).getValue() !== 'valor mío') throw new Error('perdió el dato');
+});
 
 console.log('\n--- API ---');
 let token;
@@ -187,6 +202,38 @@ paso('peso fuera de rango se rechaza', () => { if (post({ accion: 'guardar', tok
 paso('borrar elimina el día', () => {
   const r = post({ accion: 'borrar', token, fecha: '2020-01-15' });
   if (!r.ok || r.datos.mediciones.some((x) => x.fecha === '2020-01-15')) throw new Error('no borró');
+});
+paso('el arranque renueva el token: la sesión no caduca sola', () => {
+  const r = post({ accion: 'datos', token });
+  if (!r.token) throw new Error('no devolvió token nuevo');
+  if (!post({ accion: 'datos', token: r.token }).ok) throw new Error('el token nuevo no vale');
+  token = r.token;
+});
+paso('guardar un emoji como avatar', () => {
+  const r = post({ accion: 'avatar', token, avatar: '🐢' });
+  if (!r.ok) throw new Error(r.error);
+  const yo = r.datos.usuarios.find((u) => u.usuario === 'ana');
+  if (yo.avatar !== '🐢') throw new Error('avatar guardado: ' + JSON.stringify(yo.avatar));
+});
+paso('guardar una foto pequeña como avatar', () => {
+  const foto = 'data:image/jpeg;base64,' + 'A'.repeat(5000);
+  const r = post({ accion: 'avatar', token, avatar: foto });
+  if (!r.ok) throw new Error(r.error);
+  if (r.datos.usuarios.find((u) => u.usuario === 'ana').avatar !== foto) throw new Error('no guardó la foto');
+});
+paso('rechaza una imagen demasiado grande', () => {
+  const enorme = 'data:image/jpeg;base64,' + 'A'.repeat(60000);
+  if (post({ accion: 'avatar', token, avatar: enorme }).ok) throw new Error('la aceptó');
+});
+paso('rechaza una URL externa como avatar', () => {
+  if (post({ accion: 'avatar', token, avatar: 'https://ejemplo.com/foto.png' }).ok) throw new Error('la aceptó');
+});
+paso('quitar el avatar deja el campo vacío', () => {
+  const r = post({ accion: 'avatar', token, avatar: '' });
+  if (!r.ok || r.datos.usuarios.find((u) => u.usuario === 'ana').avatar !== '') throw new Error('no lo quitó');
+});
+paso('el avatar no se puede cambiar sin sesión válida', () => {
+  if (post({ accion: 'avatar', token: 'falso', avatar: '🐢' }).ok) throw new Error('lo aceptó');
 });
 paso('las mediciones salen ordenadas por fecha', () => {
   const f = post({ accion: 'datos', token }).datos.mediciones.map((m) => m.fecha);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { llamar } from '../lib/api.js';
 import { formatoLargo, formatoRelativo, hoyIso } from '../lib/fechas.js';
 import { serieDe } from '../lib/metricas.js';
+import Avatar from './Avatar.jsx';
 
 /** Registro diario: peso, si se ha hecho ejercicio y una nota opcional. */
 export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
@@ -12,6 +13,7 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
   const [guardando, setGuardando] = useState(false);
   const [aviso, setAviso] = useState(null);
 
+  const perfil = datos.usuarios.find((u) => u.usuario === sesion.usuario.usuario) ?? sesion.usuario;
   const serie = serieDe(datos.mediciones, sesion.usuario.usuario);
   const ultima = serie[serie.length - 1] ?? null;
   const existente = serie.find((p) => p.fecha === fecha) ?? null;
@@ -84,7 +86,10 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
   return (
     <section className="panel">
       <header className="panel-cabecera">
-        <h2>Hola, {sesion.usuario.nombre}</h2>
+        <div className="saludo">
+          <Avatar perfil={perfil} tamano={44} />
+          <h2>Hola, {perfil.nombre}</h2>
+        </div>
         <p className="ayuda">
           {ultima
             ? `Tu última medición fue ${formatoRelativo(ultima.fecha)}: ${ultima.peso_kg.toFixed(1)} kg.`

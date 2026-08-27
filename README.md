@@ -158,17 +158,19 @@ la de trabajo. En Cloudflare el formulario se rellena con *Root directory* `web`
 
 #### Sobre la URL de la API
 
-La primera vez que abras la app te pedirá la URL `/exec` del paso 3. Se guarda en
-el dispositivo y no vuelve a preguntarla.
+Ya viene dentro de la app, en
+[`web/src/lib/config.js`](web/src/lib/config.js), para que nadie tenga que
+teclearla: se abre y aparece directamente el inicio de sesión.
 
-Existe la opción de dejarla dentro de la compilación con la variable
-`VITE_API_URL`, pero **con el repositorio público conviene no hacerlo**: acabaría
-escrita en el JavaScript que cualquiera puede leer. Dejando que la app la pida,
-la URL sólo vive en los móviles de quienes la usáis.
+Eso significa que la URL es pública, tanto en el repositorio como en el
+JavaScript de la web. No es un secreto: lo que protege los datos es el usuario
+y la contraseña. Quien tenga la URL sólo puede intentar iniciar sesión, así que
+lo que importa es que las contraseñas de la hoja no sean `1234`.
 
-La **web** queda accesible para quien tenga la dirección; lo que protege los
-datos es el inicio de sesión, no que la URL sea difícil de adivinar. Por eso
-importa que las contraseñas de la hoja no sean `1234`.
+Si algún día vuelves a publicar el script y cambia la URL, edita ese fichero y
+recompila. Desde la propia app también se puede apuntar a otra hoja sin
+recompilar: en la pantalla de entrada, *Problemas para entrar → Cambiar la hoja
+conectada*.
 
 #### En local, sin publicar nada
 
@@ -202,6 +204,7 @@ En la pestaña **Usuarios** de la hoja, una fila por persona:
 | `peso_objetivo_kg` | Opcional. Activa el bloque de objetivo y la fecha estimada. |
 | `color` | Opcional, ej. `#2a78d6`. Vacío = color automático. |
 | `activo` | `SI` o `NO`. Con `NO` se le quita el acceso sin borrar su historial. |
+| `avatar` | La pone la app sola cuando alguien elige su foto de perfil. No hace falta tocarla. |
 
 Las columnas se localizan **por el texto de su cabecera**, así que puedes
 reordenarlas o insertar columnas propias sin romper nada. Lo que no debes cambiar
@@ -225,6 +228,14 @@ implica:
 ---
 
 ## Qué muestra la app
+
+**Sesión y perfil** — Se entra una vez y la sesión queda guardada en el
+dispositivo; se renueva sola cada vez que se abre la app, así que no vuelve a
+pedir la contraseña hasta que se pulse **Salir**. Tocando el avatar de la barra
+superior se elige foto de perfil: una foto del propio móvil (que se recorta en
+cuadrado y se comprime allí mismo antes de subirla), uno de los iconos
+sugeridos, o cualquier emoji pegado a mano. Se puede cambiar o quitar cuando se
+quiera, y aparece en el saludo, en la comparación y en la tabla del grupo.
 
 **Hoy** — Registro del día: peso, ejercicio (sí/no) y una nota. Arranca con tu
 último peso conocido, así que normalmente sólo corriges décimas. Puedes registrar
@@ -285,7 +296,9 @@ sugiere magnitudes que no son.
 
 **Cambiar el código del script.** Pega la versión nueva de `Codigo.gs` y luego
 **Implementar → Gestionar implementaciones → ✏️ → Versión: Nueva versión →
-Implementar**. Si creas una implementación nueva en vez de actualizar la
+Implementar**. Este último paso es imprescindible: mientras no se cree una
+versión nueva, la URL `/exec` sigue sirviendo el código antiguo y las funciones
+recién añadidas responden «Acción desconocida». Si creas una implementación nueva en vez de actualizar la
 existente, la URL cambia y hay que volver a ponerla en la app.
 
 **Cambiar la app.** Un push a `main` republica sola, la hospedes donde la

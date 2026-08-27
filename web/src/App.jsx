@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { borrarSesion, guardarSesion, leerSesion, llamar, urlApi } from './lib/api.js';
+import Avatar from './componentes/Avatar.jsx';
 import Configuracion from './componentes/Configuracion.jsx';
+import SelectorAvatar from './componentes/SelectorAvatar.jsx';
 import Login from './componentes/Login.jsx';
 import PanelComparar from './componentes/PanelComparar.jsx';
 import PanelHoy from './componentes/PanelHoy.jsx';
@@ -13,11 +15,13 @@ const PESTANAS = [
 ];
 
 export default function App() {
-  const [hayUrl, setHayUrl] = useState(() => Boolean(urlApi()));
+  // Sólo se pide la URL si alguien la ha borrado a mano: de fábrica ya viene.
+  const [ajustandoUrl, setAjustandoUrl] = useState(() => !urlApi());
   const [sesion, setSesion] = useState(() => leerSesion());
   const [datos, setDatos] = useState(() => leerSesion()?.datos ?? null);
   const [pestana, setPestana] = useState('hoy');
   const [refrescando, setRefrescando] = useState(false);
+  const [eligiendoAvatar, setEligiendoAvatar] = useState(false);
   const [avisoGlobal, setAvisoGlobal] = useState(null);
 
   const salir = useCallback((mensaje) => {
@@ -35,18 +39,20 @@ export default function App() {
     [salir]
   );
 
-  const refrescar = useCallback(
-    (nuevos) => {
-      setDatos(nuevos);
-      setSesion((actual) => {
-        if (!actual) return actual;
-        const actualizada = { ...actual, datos: nuevos };
-        guardarSesion(actualizada);
-        return actualizada;
-      });
-    },
-    []
-  );
+  /**
+   * Guarda datos frescos y, si el servidor manda un token renovado, lo
+   * sustituye: mientras se use la app, la sesión no llega a caducar.
+   */
+  const refrescar = useCallback((nuevos, tokenNuevo) => {
+    setDatos(nuevos);
+    setSesion((actual) => {
+      if (!actual) return actual;
+      const actualizada = { ...actual, datos: nuevos };
+      if (tokenNuevo) actualizada.token = tokenNuevo;
+      guardarSesion(actualizada);
+      return actualizada;
+    });
+  }, []);
 
   // Al abrir la app se recargan los datos: la hoja puede haber cambiado a mano.
   useEffect(() => {
@@ -54,15 +60,15 @@ export default function App() {
     let cancelado = false;
     setRefrescando(true);
     llamar('datos', { token: sesion.token })
-      .then((r) => { if (!cancelado) refrescar(r.datos); })
+      .then((r) => { if (!cancelado) refrescar(r.datos, r.token); })
       .catch((e) => { if (!cancelado) alError(e); })
       .finally(() => { if (!cancelado) setRefrescando(false); });
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sesion?.token]);
 
-  if (!hayUrl) {
-    return <Configuracion alGuardar={() => setHayUrl(true)} />;
+  if (ajustandoUrl) {
+    return <Configuracion alGuardar={() => setAjustandoUrl(false)} />;
   }
 
   if (!sesion || !datos) {
@@ -78,19 +84,34 @@ export default function App() {
             setSesion(nueva);
             setPestana('hoy');
           }}
-          alCambiarUrl={() => setHayUrl(false)}
+          alCambiarUrl={() => setAjustandoUrl(true)}
         />
       </>
     );
   }
 
+  // El perfil se toma de los datos frescos: así el avatar recién cambiado
+  // se ve al instante en toda la app.
+  const perfil =
+    datos.usuarios.find((u) => u.usuario === sesion.usuario.usuario) ?? sesion.usuario;
+
   return (
     <div className="app">
       <header className="barra-superior">
-        <span className="marca-icono" aria-hidden="true">◗</span>
+        <Avatar perfil={perfil} tamano={34} comoBoton alPulsar={() => setEligiendoAvatar(true)} />
         <span className="titulo">HealthWeWear</span>
         <button className="enlace" onClick={() => salir()}>Salir</button>
       </header>
+
+      {eligiendoAvatar && (
+        <SelectorAvatar
+          sesion={sesion}
+          perfil={perfil}
+          alGuardar={refrescar}
+          alCerrar={() => setEligiendoAvatar(false)}
+          alError={alError}
+        />
+      )}
 
       {avisoGlobal && <p className="banda" role="alert">{avisoGlobal}</p>}
 

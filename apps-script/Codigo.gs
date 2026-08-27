@@ -30,12 +30,26 @@
 
 var HOJA_USUARIOS   = 'Usuarios';
 var HOJA_MEDICIONES = 'Mediciones';
-var DIAS_SESION     = 30;
+/* La sesión dura un año y se renueva sola en cada arranque de la app, así
+   que en la práctica sólo termina cuando se pulsa Salir. */
+var DIAS_SESION     = 365;
 
 var COLUMNAS_USUARIOS = [
   'usuario', 'password', 'nombre', 'sexo', 'altura_cm',
-  'fecha_nacimiento', 'peso_objetivo_kg', 'color', 'activo'
+  'fecha_nacimiento', 'peso_objetivo_kg', 'color', 'activo', 'avatar'
 ];
+
+/*
+ * Columnas que pueden faltar sin que nada se rompa. Así una hoja creada con
+ * una versión anterior del script sigue funcionando: lo único que pasa es
+ * que esa función concreta no está disponible hasta ejecutar configurar().
+ */
+var COLUMNAS_OPCIONALES = ['avatar'];
+
+/* Un avatar es un emoji o una foto pequeña como data URI. El límite de una
+   celda de Google Sheets son 50.000 caracteres; nos quedamos cómodamente por
+   debajo. */
+var MAXIMO_AVATAR = 40000;
 var COLUMNAS_MEDICIONES = ['fecha', 'usuario', 'peso_kg', 'ejercicio', 'nota'];
 
 /**
@@ -69,7 +83,7 @@ var PALETA = [
 function configurar() {
   var libro = documento();
 
-  var usuarios   = prepararHoja(libro, HOJA_USUARIOS,   COLUMNAS_USUARIOS,   [110, 110, 140, 70, 90, 140, 140, 90, 70]);
+  var usuarios   = prepararHoja(libro, HOJA_USUARIOS,   COLUMNAS_USUARIOS,   [110, 110, 140, 70, 90, 140, 140, 90, 70, 90]);
   var mediciones = prepararHoja(libro, HOJA_MEDICIONES, COLUMNAS_MEDICIONES, [110, 110, 90, 90, 260]);
   prepararLeeme(libro);
 
@@ -160,10 +174,19 @@ function anadirEjemplos() {
     return;
   }
 
-  usuarios.getRange(2, 1, 2, COLUMNAS_USUARIOS.length).setValues([
-    ['ana',  'cambiame', 'Ana',  'F', 165, '1990-04-12', 60, '#2a78d6', 'SI'],
-    ['luis', 'cambiame', 'Luis', 'M', 178, '1988-11-03', 78, '#eb6834', 'SI']
-  ]);
+  var indiceUsuarios = indiceColumnas(usuarios, COLUMNAS_USUARIOS);
+  [
+    { usuario: 'ana',  password: 'cambiame', nombre: 'Ana',  sexo: 'F', altura_cm: 165,
+      fecha_nacimiento: '1990-04-12', peso_objetivo_kg: 60, color: '#2a78d6', activo: 'SI', avatar: '🍀' },
+    { usuario: 'luis', password: 'cambiame', nombre: 'Luis', sexo: 'M', altura_cm: 178,
+      fecha_nacimiento: '1988-11-03', peso_objetivo_kg: 78, color: '#eb6834', activo: 'SI', avatar: '🚴' }
+  ].forEach(function (persona, i) {
+    COLUMNAS_USUARIOS.forEach(function (columna) {
+      if (indiceUsuarios[columna] !== -1) {
+        usuarios.getRange(2 + i, indiceUsuarios[columna] + 1).setValue(persona[columna]);
+      }
+    });
+  });
 
   var hoy   = new Date();
   var filas = [];
@@ -203,27 +226,47 @@ function onOpen() {
 /* ------------------------------------------------------------------ */
 
 
+/**
+ * Crea la hoja si no está y se asegura de que tenga todas las cabeceras.
+ *
+ * No reescribe las que ya existen: sólo añade al final las que falten. Así,
+ * si has reordenado columnas o insertado alguna tuya, ejecutar configurar()
+ * de nuevo no descoloca tus datos.
+ */
 function prepararHoja(libro, nombre, columnas, anchos) {
   var hoja = libro.getSheetByName(nombre) || libro.insertSheet(nombre);
 
-  hoja.getRange(1, 1, 1, columnas.length)
-      .setValues([columnas])
+  var existentes = hoja.getLastColumn() > 0
+    ? hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0]
+          .map(function (c) { return String(c || '').trim().toLowerCase(); })
+    : [];
+
+  var faltan = columnas.filter(function (c) { return existentes.indexOf(c) === -1; });
+  faltan.forEach(function (nombreColumna, i) {
+    hoja.getRange(1, existentes.length + i + 1).setValue(nombreColumna);
+  });
+
+  var total = existentes.length + faltan.length;
+  hoja.getRange(1, 1, 1, total)
       .setFontWeight('bold')
       .setFontColor('#ffffff')
       .setBackground('#1f3a5f')
       .setHorizontalAlignment('center')
-      .setVerticalAlignment('middle');
+      .setVerticalAlignment('middle')
+      .setWrap(true);
 
   hoja.setFrozenRows(1);
-  hoja.getRange(1, 1, 1, columnas.length).setWrap(true);
-  anchos.forEach(function (ancho, i) { hoja.setColumnWidth(i + 1, ancho); });
+  anchos.forEach(function (ancho, i) {
+    if (i < total) hoja.setColumnWidth(i + 1, ancho);
+  });
 
   return hoja;
 }
 
 function formatearUsuarios(hoja) {
-  var filas = Math.max(hoja.getMaxRows() - 1, 1);
-  var col   = function (nombre) { return COLUMNAS_USUARIOS.indexOf(nombre) + 1; };
+  var filas  = Math.max(hoja.getMaxRows() - 1, 1);
+  var indice = indiceColumnas(hoja, COLUMNAS_USUARIOS);
+  var col    = function (nombre) { return indice[nombre] + 1; };
 
   hoja.getRange(2, col('fecha_nacimiento'), filas, 1).setNumberFormat('yyyy-mm-dd');
   hoja.getRange(2, col('altura_cm'),        filas, 1).setNumberFormat('0');
@@ -239,8 +282,9 @@ function formatearUsuarios(hoja) {
 }
 
 function formatearMediciones(hoja) {
-  var filas = Math.max(hoja.getMaxRows() - 1, 1);
-  var col   = function (nombre) { return COLUMNAS_MEDICIONES.indexOf(nombre) + 1; };
+  var filas  = Math.max(hoja.getMaxRows() - 1, 1);
+  var indice = indiceColumnas(hoja, COLUMNAS_MEDICIONES);
+  var col    = function (nombre) { return indice[nombre] + 1; };
 
   hoja.getRange(2, col('fecha'),   filas, 1).setNumberFormat('yyyy-mm-dd');
   hoja.getRange(2, col('peso_kg'), filas, 1).setNumberFormat('0.0');
@@ -392,6 +436,7 @@ function enrutar(p) {
     case 'datos':   return accionDatos(p);
     case 'guardar': return accionGuardar(p);
     case 'borrar':  return accionBorrar(p);
+    case 'avatar':  return accionAvatar(p);
     default:        return { ok: false, error: 'Acción desconocida: ' + p.accion };
   }
 }
@@ -426,7 +471,8 @@ function accionLogin(p) {
 function accionDatos(p) {
   var sesion = validarToken(p.token);
   if (!sesion.ok) return sesion;
-  return { ok: true, datos: instantanea() };
+  // Token nuevo en cada arranque: mientras se use, la sesión no caduca.
+  return { ok: true, token: crearToken(sesion.usuario), datos: instantanea() };
 }
 
 function accionGuardar(p) {
@@ -506,6 +552,47 @@ function accionBorrar(p) {
   }
 }
 
+/**
+ * Guarda el avatar de quien tiene la sesión: un emoji o una foto pequeña
+ * que la app ya ha recortado y comprimido antes de enviarla.
+ */
+function accionAvatar(p) {
+  var sesion = validarToken(p.token);
+  if (!sesion.ok) return sesion;
+
+  var avatar = String(p.avatar === undefined || p.avatar === null ? '' : p.avatar);
+
+  if (avatar.length > MAXIMO_AVATAR) {
+    return { ok: false, error: 'La imagen es demasiado grande. Prueba con otra.' };
+  }
+  // Sólo emoji/texto corto o una imagen en línea: nada de URLs externas.
+  if (avatar && avatar.length > 16 && avatar.indexOf('data:image/') !== 0) {
+    return { ok: false, error: 'Formato de avatar no admitido.' };
+  }
+
+  var candado = LockService.getScriptLock();
+  candado.waitLock(20000);
+  try {
+    var hoja   = hojaObligatoria(HOJA_USUARIOS);
+    var indice = indiceColumnas(hoja, COLUMNAS_USUARIOS);
+
+    if (indice.avatar === -1) {
+      return { ok: false, error: 'Falta la columna "avatar" en la hoja Usuarios. Ejecuta configurar() una vez.' };
+    }
+
+    var filas = hoja.getDataRange().getValues();
+    for (var i = 1; i < filas.length; i++) {
+      if (String(filas[i][indice.usuario]).trim().toLowerCase() === sesion.usuario) {
+        hoja.getRange(i + 1, indice.avatar + 1).setValue(avatar);
+        return { ok: true, datos: instantanea() };
+      }
+    }
+    return { ok: false, error: 'No encuentro tu fila en la hoja Usuarios.' };
+  } finally {
+    candado.releaseLock();
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Lectura de datos                                                   */
 /* ------------------------------------------------------------------ */
@@ -533,7 +620,8 @@ function publico(u) {
     altura_cm:        u.altura_cm,
     fecha_nacimiento: u.fecha_nacimiento,
     peso_objetivo_kg: u.peso_objetivo_kg,
-    color:            u.color
+    color:            u.color,
+    avatar:           u.avatar
   };
 }
 
@@ -559,6 +647,7 @@ function leerUsuarios() {
       fecha_nacimiento: normalizarFecha(f[indice.fecha_nacimiento]),
       peso_objetivo_kg: normalizarNumero(f[indice.peso_objetivo_kg]),
       color:            colorValido(f[indice.color]) || PALETA[salida.length % PALETA.length],
+      avatar:           String(celda(f, indice.avatar) || ''),
       // Vacío se interpreta como activo: así no hay que rellenar la columna.
       activo:           activoBruto !== 'NO' && activoBruto !== 'FALSE'
     });
@@ -674,13 +763,18 @@ function indiceColumnas(hoja, esperadas) {
   var indice = {};
   esperadas.forEach(function (nombre) {
     var pos = cabeceras.indexOf(nombre);
-    if (pos === -1) {
+    if (pos === -1 && COLUMNAS_OPCIONALES.indexOf(nombre) === -1) {
       throw new Error('Falta la columna "' + nombre + '" en la hoja "' + hoja.getName() +
                       '". Ejecuta configurar() para restaurar las cabeceras.');
     }
-    indice[nombre] = pos;
+    indice[nombre] = pos; // -1 si es opcional y no está
   });
   return indice;
+}
+
+/** Lee una celda tolerando que su columna no exista. */
+function celda(fila, posicion) {
+  return posicion === -1 || fila[posicion] === undefined ? '' : fila[posicion];
 }
 
 function normalizarNumero(valor) {

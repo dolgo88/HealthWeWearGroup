@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { recortarDesde, resumenDe, serieDe, serieRelativa } from '../lib/metricas.js';
 import { useColorDeSerie } from '../lib/paleta.js';
+import Avatar from './Avatar.jsx';
 import GraficoLineas from './GraficoLineas.jsx';
 import Leyenda from './Leyenda.jsx';
 import TablaDatos from './TablaDatos.jsx';
@@ -82,9 +83,7 @@ export default function PanelComparar({ sesion, datos }) {
               onClick={() => alternar(u.usuario)}
               style={activo ? { borderColor: adaptarColor(u.color), boxShadow: `inset 0 0 0 1px ${adaptarColor(u.color)}` } : undefined}
             >
-              <svg width="12" height="12" aria-hidden="true">
-                <circle cx="6" cy="6" r="5" fill={activo ? adaptarColor(u.color) : 'transparent'} stroke={adaptarColor(u.color)} strokeWidth="2" />
-              </svg>
+              <Avatar perfil={u} tamano={24} />
               {u.nombre}
               {u.usuario === yo && <span className="atenuado"> (tú)</span>}
             </button>
@@ -162,9 +161,7 @@ export default function PanelComparar({ sesion, datos }) {
               {tabla.map((r) => (
                 <tr key={r.perfil.usuario} className={r.perfil.usuario === yo ? 'fila-propia' : undefined}>
                   <th scope="row">
-                    <svg width="10" height="10" aria-hidden="true">
-                      <circle cx="5" cy="5" r="4" fill={adaptarColor(r.perfil.color)} />
-                    </svg>
+                    <Avatar perfil={r.perfil} tamano={22} />
                     {r.perfil.nombre}
                   </th>
                   <td>{r.pesoActual.toFixed(1)}</td>
