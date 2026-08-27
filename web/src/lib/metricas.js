@@ -9,8 +9,20 @@ import { aIso, diasEntre, edadEnAnios, hoyIso, sumarDias } from './fechas.js';
 /*  Fórmulas básicas                                                 */
 /* ---------------------------------------------------------------- */
 
+/*
+ * Alturas humanas plausibles, en cm. Fuera de este rango casi siempre es un
+ * error de tecleo —180 escrito como 1800, o metros en vez de centímetros— y
+ * más vale avisar que calcular un IMC sin sentido.
+ */
+export const ALTURA_MINIMA = 100;
+export const ALTURA_MAXIMA = 250;
+
+export function alturaPlausible(alturaCm) {
+  return Boolean(alturaCm) && alturaCm >= ALTURA_MINIMA && alturaCm <= ALTURA_MAXIMA;
+}
+
 export function calcularImc(pesoKg, alturaCm) {
-  if (!pesoKg || !alturaCm) return null;
+  if (!pesoKg || !alturaPlausible(alturaCm)) return null;
   const m = alturaCm / 100;
   return pesoKg / (m * m);
 }
@@ -33,14 +45,14 @@ export function clasificarImc(imc) {
 
 /** Rango de peso con IMC entre 18,5 y 25 para una altura dada. */
 export function rangoPesoSaludable(alturaCm) {
-  if (!alturaCm) return null;
+  if (!alturaPlausible(alturaCm)) return null;
   const m = alturaCm / 100;
   return { min: 18.5 * m * m, max: 24.9 * m * m };
 }
 
 /** Metabolismo basal, fórmula de Mifflin-St Jeor (kcal/día en reposo). */
 export function calcularTmb({ sexo, pesoKg, alturaCm, edad }) {
-  if (!pesoKg || !alturaCm || edad === null || edad === undefined) return null;
+  if (!pesoKg || !alturaPlausible(alturaCm) || edad === null || edad === undefined) return null;
   const base = 10 * pesoKg + 6.25 * alturaCm - 5 * edad;
   return sexo === 'F' ? base - 161 : base + 5;
 }
@@ -215,6 +227,7 @@ export function resumenDe(perfil, mediciones, referencia = hoyIso()) {
 
     imc,
     categoriaImc: clasificarImc(imc),
+    avisoFicha: revisarFicha(perfil, edad),
     rangoSaludable: rangoPesoSaludable(perfil.altura_cm),
     edad,
     tmb,
@@ -234,6 +247,24 @@ export function resumenDe(perfil, mediciones, referencia = hoyIso()) {
 
     diasDesdeUltima: diasEntre(ultimo.fecha, referencia)
   };
+}
+
+/** Datos del perfil que impiden calcular algo, en lenguaje llano. */
+function revisarFicha(perfil, edad) {
+  if (!perfil.altura_cm) {
+    return 'Te falta la altura en la hoja, así que no puedo calcular tu IMC.';
+  }
+  if (!alturaPlausible(perfil.altura_cm)) {
+    const probable = perfil.altura_cm > ALTURA_MAXIMA && perfil.altura_cm / 10 <= ALTURA_MAXIMA
+      ? ` ¿Querías poner ${Math.round(perfil.altura_cm / 10)}?`
+      : '';
+    return `Tu altura está puesta como ${perfil.altura_cm} cm, que no puede ser.${probable}` +
+           ' Corrígela en la columna altura_cm de la hoja Usuarios.';
+  }
+  if (edad === null) {
+    return 'Te falta la fecha de nacimiento en la hoja, así que no puedo calcular tu metabolismo basal.';
+  }
+  return null;
 }
 
 function calcularObjetivo(perfil, ultimo, tendencia, referencia) {

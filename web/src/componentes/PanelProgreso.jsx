@@ -46,6 +46,10 @@ export default function PanelProgreso({ sesion, datos }) {
         </p>
       </header>
 
+      {r.avisoFicha && (
+        <p className="banda-aviso" role="status">{r.avisoFicha}</p>
+      )}
+
       <div className="hero">
         <div>
           <div className="hero-valor">
@@ -86,7 +90,7 @@ export default function PanelProgreso({ sesion, datos }) {
         <Tarjeta
           etiqueta="IMC"
           valor={r.imc ? r.imc.toFixed(1) : '—'}
-          pie={r.categoriaImc?.etiqueta ?? 'Falta la altura en la hoja'}
+          pie={r.categoriaImc?.etiqueta ?? 'revisa tu altura en la hoja'}
           estado={r.categoriaImc?.estado}
         />
         <Tarjeta

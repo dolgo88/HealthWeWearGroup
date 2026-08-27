@@ -315,6 +315,15 @@ button.enlace.peligro { color: var(--estado-critical); }
   font-size: 0.9rem;
 }
 
+.banda-aviso {
+  background: var(--acento-lavado);
+  border-left: 3px solid var(--estado-warning);
+  color: var(--ink-1);
+  font-size: 0.88rem;
+  padding: 10px 12px;
+  border-radius: var(--radio-s);
+}
+
 .ayuda-larga { font-size: 0.85rem; color: var(--ink-2); margin-top: 8px; }
 .ayuda-larga summary { cursor: pointer; color: var(--acento); }
 .ayuda-larga ol { padding-left: 20px; margin: 8px 0 0; }
