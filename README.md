@@ -98,15 +98,25 @@ entrar.
 
 ### 4. Publicar la app
 
-En este repositorio **GitHub Actions está bloqueado** (política de la cuenta): un
-push que toca el propio workflow no llega ni a registrarlo. Así que el workflow
-de `.github/workflows/` no sirve aquí, y hay que usar el **otro** modo de
-GitHub Pages, el que sirve ficheros ya compilados sin pasar por Actions.
+En este repositorio **GitHub Pages no llega a publicar**, y conviene saber por
+qué antes de pelearse con la configuración: los jobs de Actions se encolan y
+ningún runner los recoge nunca. Actions está habilitado y los workflows se
+disparan correctamente —se ven en la pestaña Actions—, pero se quedan en
+*queued* indefinidamente.
 
-La carpeta [`docs/`](docs) contiene la app ya compilada y está en el
-repositorio a propósito. Normalmente no se sube el resultado de una compilación,
-pero sin Actions es la única forma de publicar sin depender de un servicio
-externo.
+Eso afecta a las **dos** formas de publicar con Pages, porque ambas se ejecutan
+como un workflow: la de `.github/workflows/desplegar.yml` y la gestionada por
+GitHub (`pages build and deployment`) que usa el modo «Deploy from a branch».
+Mientras no haya runners disponibles, Pages no publica se configure como se
+configure, y no da ningún mensaje de error: simplemente no aparece nunca el
+recuadro verde.
+
+Suele ser una restricción de la organización o del plan sobre los runners
+alojados por GitHub. Merece la pena mirar **Settings → Actions → Runners** y la
+página de facturación de la cuenta. Si no se puede resolver, usa Netlify más
+abajo: compila en su propia infraestructura y no depende de nada de esto.
+
+Si algún día hay runners disponibles, los pasos son:
 
 1. **Settings → Pages**.
 2. En *Source* elige **Deploy from a branch**.
@@ -128,10 +138,18 @@ npm run publicar
 Compila y deja el resultado en `docs/`. Luego un commit y un push, y Pages lo
 recoge en un par de minutos.
 
-#### Si prefieres no subir la compilación
+#### Netlify: la vía que sí funciona aquí
 
-Netlify y Cloudflare Pages compilan ellos y no necesitan Actions ni la carpeta
-`docs/`. [`netlify.toml`](netlify.toml) ya está configurado: en
+Netlify y Cloudflare Pages compilan en su propia infraestructura y no dependen
+de los runners de GitHub.
+
+La forma más rápida, sin cuenta ni conectar el repositorio: compila con
+`npm run publicar` desde `web`, y arrastra la carpeta resultante a
+[netlify.com/drop](https://app.netlify.com/drop). Te da una URL al instante.
+Ojo: para servir desde la raíz de un dominio hay que compilar con `VITE_BASE=/`,
+no con la base `/HealthWeWearGroup/` que necesita Pages.
+
+Para que se republique sola con cada push: [`netlify.toml`](netlify.toml) ya está configurado: en
 [app.netlify.com](https://app.netlify.com), *Add new site → Import an existing
 project → GitHub*, eliges el repositorio y compruebas que la rama a desplegar sea
 la de trabajo. En Cloudflare el formulario se rellena con *Root directory* `web`,
