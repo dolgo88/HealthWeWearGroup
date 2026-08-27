@@ -23,6 +23,7 @@ Hoja de cálculo  ──►  Apps Script  ──►  App web (React)
 | `apps-script/pruebas/` | Banco de pruebas del backend, ejecutable en Node. |
 | `web/` | La aplicación web: React + Vite, sin dependencias de gráficos. |
 | `docs/` | La app ya compilada. Es lo que sirve GitHub Pages. |
+| `herramientas/` | Utilidades sueltas, como el generador de iconos. |
 | `netlify.toml` | Despliegue alternativo en Netlify, que compila él mismo. |
 | `.github/workflows/` | Despliegue automático. Sólo sirve con Actions habilitado. |
 
@@ -237,6 +238,24 @@ cuadrado y se comprime allí mismo antes de subirla), uno de los iconos
 sugeridos, o cualquier emoji pegado a mano. Se puede cambiar o quitar cuando se
 quiera, y aparece en el saludo, en la comparación y en la tabla del grupo.
 
+**Grupo** — Es la pestaña que se abre al entrar: la comparación con el resto,
+porque lo primero que apetece ver es cómo va cada uno.
+
+**Constancia** — El trato del grupo son **2 días de ejercicio por semana**. Si una
+semana no llegas a dos, la siguiente te pide **3**. El recargo dura sólo esa
+semana: lo que decide el requisito de la siguiente es si hiciste dos o más, no si
+cumpliste el recargo. Las semanas van de lunes a domingo, y una semana sin ningún
+registro cuenta como fallada.
+
+La pestaña muestra cómo va la semana en curso, el historial semana a semana con
+su ✓ o su ✗, tu racha, y cómo va el resto del grupo esta semana. Arriba, un
+veredicto que anima o riñe según el caso: reconoce las rachas y las remontadas, y
+llama a las cosas por su nombre cuando llevas semanas sin aparecer.
+
+El juicio es siempre sobre el **ejercicio**, que es una conducta que depende de
+ti. Nunca sobre el peso ni sobre el cuerpo, que no responden a un tirón de orejas
+y donde una app no tiene nada que reprochar.
+
 **Hoy** — Registro del día: peso, ejercicio (sí/no) y una nota. Arranca con tu
 último peso conocido, así que normalmente sólo corriges décimas. Puedes registrar
 días pasados y corregir o borrar cualquier día: una persona tiene como mucho una
@@ -294,6 +313,17 @@ sugiere magnitudes que no son.
 
 ## Mantenimiento
 
+**Cambiar el logo.** Deja tu imagen en `web/public/logo.png` y ejecuta:
+
+```bash
+pip install pillow
+python3 herramientas/generar-iconos.py web/public/logo.png
+```
+
+Genera los tres PNG que pide el manifiesto, incluido el *maskable* con margen
+extra (Android recorta el icono a la forma que tenga configurada cada usuario y
+se comería los bordes). Después, `npm run publicar` desde `web` y un push.
+
 **Cambiar el código del script.** Pega la versión nueva de `Codigo.gs` y luego
 **Implementar → Gestionar implementaciones → ✏️ → Versión: Nueva versión →
 Implementar**. Este último paso es imprescindible: mientras no se cree una
@@ -321,6 +351,8 @@ creado fuera de la hoja.
 | No sale el menú **HealthWeWear** en la hoja | Recarga la hoja (F5): `onOpen` sólo corre al abrirla. Si el script está suelto, no habrá menú nunca. |
 | «Falta la hoja "Usuarios"» | No se ejecutó `configurar()`. Hazlo desde el menú **HealthWeWear** o desde el editor. |
 | «Usuario o contraseña incorrectos» con datos correctos | Sobra un espacio en la celda, o `activo` está en `NO`. |
+| «Este script no conoce la acción…» al guardar el avatar | El código está pegado pero no publicado. Falta **Implementar → Gestionar implementaciones → ✏️ → Nueva versión**. |
+| «Falta la columna "avatar"» | Ejecuta `configurar` una vez tras actualizar el script. |
 | La app no ve un cambio hecho a mano en la hoja | Los datos se recargan al abrir la app; ciérrala y vuelve a abrirla. |
 
 ---

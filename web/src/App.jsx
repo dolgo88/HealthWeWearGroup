@@ -5,21 +5,26 @@ import Configuracion from './componentes/Configuracion.jsx';
 import SelectorAvatar from './componentes/SelectorAvatar.jsx';
 import Login from './componentes/Login.jsx';
 import PanelComparar from './componentes/PanelComparar.jsx';
+import PanelConstancia from './componentes/PanelConstancia.jsx';
 import PanelHoy from './componentes/PanelHoy.jsx';
 import PanelProgreso from './componentes/PanelProgreso.jsx';
 
 const PESTANAS = [
-  { clave: 'hoy',      texto: 'Hoy',      icono: '＋' },
-  { clave: 'progreso', texto: 'Progreso', icono: '◔' },
-  { clave: 'comparar', texto: 'Comparar', icono: '⇅' }
+  { clave: 'comparar',   texto: 'Grupo',      icono: '⇅' },
+  { clave: 'hoy',        texto: 'Hoy',        icono: '＋' },
+  { clave: 'progreso',   texto: 'Progreso',   icono: '◔' },
+  { clave: 'constancia', texto: 'Constancia', icono: '✓' }
 ];
+
+/* Al entrar se abre la comparación: lo primero es ver cómo va el grupo. */
+const PESTANA_INICIAL = 'comparar';
 
 export default function App() {
   // Sólo se pide la URL si alguien la ha borrado a mano: de fábrica ya viene.
   const [ajustandoUrl, setAjustandoUrl] = useState(() => !urlApi());
   const [sesion, setSesion] = useState(() => leerSesion());
   const [datos, setDatos] = useState(() => leerSesion()?.datos ?? null);
-  const [pestana, setPestana] = useState('hoy');
+  const [pestana, setPestana] = useState(PESTANA_INICIAL);
   const [refrescando, setRefrescando] = useState(false);
   const [eligiendoAvatar, setEligiendoAvatar] = useState(false);
   const [avisoGlobal, setAvisoGlobal] = useState(null);
@@ -82,7 +87,7 @@ export default function App() {
             setAvisoGlobal(null);
             setDatos(respuesta.datos);
             setSesion(nueva);
-            setPestana('hoy');
+            setPestana(PESTANA_INICIAL);
           }}
           alCambiarUrl={() => setAjustandoUrl(true)}
         />
@@ -122,6 +127,7 @@ export default function App() {
         )}
         {pestana === 'progreso' && <PanelProgreso sesion={sesion} datos={datos} />}
         {pestana === 'comparar' && <PanelComparar sesion={sesion} datos={datos} />}
+        {pestana === 'constancia' && <PanelConstancia sesion={sesion} datos={datos} />}
       </main>
 
       <nav className="barra-inferior" aria-label="Secciones">

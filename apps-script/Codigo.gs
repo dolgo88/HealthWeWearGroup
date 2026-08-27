@@ -64,6 +64,17 @@ var COLUMNAS_MEDICIONES = ['fecha', 'usuario', 'peso_kg', 'ejercicio', 'nota'];
  */
 var ID_HOJA = '1NUU0DCMl5NJVjk1iw8bqVlsvdYojDrQNPf2pfnWV0nk';
 
+/*
+ * Versión de la API. La app comprueba este número al entrar y avisa si el
+ * script publicado se ha quedado atrás.
+ *
+ * Es el fallo más habitual al actualizar: se pega el código nuevo en el
+ * editor pero no se crea una versión nueva de la implementación, así que la
+ * URL /exec sigue sirviendo el código viejo y las funciones recién añadidas
+ * responden "Acción desconocida". Sube este número al añadir una acción.
+ */
+var VERSION_API = 2;
+
 /* Paleta por defecto que se reparte entre usuarios sin color propio.
    Orden fijo y validado para daltonismo — no lo reordenes a la ligera. */
 var PALETA = [
@@ -431,13 +442,20 @@ function responder(objeto) {
 
 function enrutar(p) {
   switch (p.accion) {
-    case 'ping':    return { ok: true, servicio: 'HealthWeWear', version: 1 };
+    case 'ping':    return { ok: true, servicio: 'HealthWeWear', version: VERSION_API };
     case 'login':   return accionLogin(p);
     case 'datos':   return accionDatos(p);
     case 'guardar': return accionGuardar(p);
     case 'borrar':  return accionBorrar(p);
     case 'avatar':  return accionAvatar(p);
-    default:        return { ok: false, error: 'Acción desconocida: ' + p.accion };
+    default:
+      return {
+        ok: false,
+        error: 'Este script no conoce la acción "' + p.accion + '". Seguramente la ' +
+               'implementación publicada es de una versión anterior: en el editor de ' +
+               'Apps Script, Implementar > Gestionar implementaciones > lápiz > ' +
+               'Versión: Nueva versión > Implementar.'
+      };
   }
 }
 
@@ -462,6 +480,7 @@ function accionLogin(p) {
 
   return {
     ok: true,
+    version: VERSION_API,
     token: crearToken(usuario),
     usuario: publico(fila),
     datos: instantanea()
@@ -472,7 +491,7 @@ function accionDatos(p) {
   var sesion = validarToken(p.token);
   if (!sesion.ok) return sesion;
   // Token nuevo en cada arranque: mientras se use, la sesión no caduca.
-  return { ok: true, token: crearToken(sesion.usuario), datos: instantanea() };
+  return { ok: true, version: VERSION_API, token: crearToken(sesion.usuario), datos: instantanea() };
 }
 
 function accionGuardar(p) {

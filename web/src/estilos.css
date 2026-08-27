@@ -137,7 +137,7 @@ p { margin: 0; }
 
 .barra-inferior {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   background: var(--superficie);
   border-top: 1px solid var(--borde);
   padding-bottom: env(safe-area-inset-bottom);
@@ -148,17 +148,17 @@ p { margin: 0; }
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 10px 4px;
+  padding: 10px 2px;
   border: 0;
   background: none;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--ink-3);
   cursor: pointer;
   min-height: 56px;
 }
 
-.barra-inferior button span { font-size: 1.1rem; line-height: 1.1; }
+.barra-inferior button span { font-size: 1.05rem; line-height: 1.1; }
 .barra-inferior button.activo { color: var(--acento); font-weight: 600; }
 
 .pantalla-centro {
@@ -553,6 +553,87 @@ code {
 }
 
 .ficha.activa { color: var(--ink-1); font-weight: 600; }
+
+/* ------------------------------------------------------------------ */
+/*  Constancia                                                         */
+/* ------------------------------------------------------------------ */
+
+/* El veredicto de la semana: el tono lo marca la banda lateral, pero el
+   texto dice lo mismo por sí solo — el color nunca es el único mensaje. */
+.veredicto {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--ink-3);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+}
+
+.veredicto h3 { font-size: 1.05rem; margin-bottom: 4px; }
+.veredicto p  { font-size: 0.92rem; color: var(--ink-2); }
+
+.veredicto.tono-good     { border-left-color: var(--estado-good); }
+.veredicto.tono-warning  { border-left-color: var(--estado-warning); }
+.veredicto.tono-critical { border-left-color: var(--estado-critical); }
+
+.semanas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.semana {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 2px 6px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+  background: var(--superficie);
+}
+
+.semana-marca  { font-size: 1.1rem; line-height: 1.1; font-weight: 700; }
+.semana-cuenta { font-size: 0.8rem; font-variant-numeric: tabular-nums; color: var(--ink-1); }
+.semana-fecha  { font-size: 0.68rem; color: var(--ink-3); }
+
+.semana.cumplida .semana-marca { color: var(--estado-good); }
+.semana.fallada  .semana-marca { color: var(--estado-critical); }
+.semana.fallada  { background: var(--plano); }
+.semana.en-curso { border-color: var(--acento); border-style: dashed; }
+.semana.en-curso .semana-marca { color: var(--acento); }
+
+.lista-grupo { list-style: none; margin: 0; padding: 0; }
+
+.lista-grupo li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--borde);
+  font-size: 0.92rem;
+}
+
+.lista-grupo li:last-child { border-bottom: 0; }
+.lista-grupo .nombre { flex: 1; }
+.lista-grupo li span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* Texto sólo para lectores de pantalla: la rejilla de semanas se apoya en
+   iconos, y esto le da la lectura completa. */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Avatares                                                           */
