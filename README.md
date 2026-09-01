@@ -327,16 +327,25 @@ sugiere magnitudes que no son.
 
 ## Mantenimiento
 
-**Cambiar el logo.** Deja tu imagen en `web/public/logo.png` y ejecuta:
+**Cambiar el logo.** Deja tu imagen en `web/public/` y ejecuta:
 
 ```bash
 pip install pillow
-python3 herramientas/generar-iconos.py web/public/logo.png
+python3 herramientas/generar-iconos.py web/public/logo.jpg
 ```
 
-Genera los tres PNG que pide el manifiesto, incluido el *maskable* con margen
-extra (Android recorta el icono a la forma que tenga configurada cada usuario y
-se comería los bordes). Después, `npm run publicar` desde `web` y un push.
+Genera los tres PNG que pide el manifiesto —incluido el *maskable* con margen
+extra, porque Android recorta el icono a la forma que cada usuario tenga
+configurada— más `logo-limpio.png`, que es el que usa la app dentro.
+
+Si el logo trae fondo plano (cualquier JPEG lo trae), el script lo detecta
+midiendo la mediana de su contorno y lo vuelve transparente. Igualar el color
+del lienzo no basta: casi todos los logos llevan una viñeta, el centro es más
+claro que los bordes, y siempre acaba viéndose un recuadro tenue dentro del
+icono. Con el fondo recortado desaparece, y de paso el logo vale igual sobre
+claro que sobre oscuro.
+
+Después, `npm run publicar` desde `web` y un push.
 
 **Cambiar el código del script.** Pega la versión nueva de `Codigo.gs` y luego
 **Implementar → Gestionar implementaciones → ✏️ → Versión: Nueva versión →

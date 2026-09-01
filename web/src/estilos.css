@@ -118,13 +118,25 @@ p { margin: 0; }
   border-bottom: 1px solid var(--borde);
 }
 
-.barra-superior .titulo { font-weight: 600; flex: 1; }
+.barra-superior .titulo { font-weight: 600; }
 
-.marca-icono {
-  color: var(--acento);
-  font-size: 1.3rem;
-  line-height: 1;
+.barra-superior .separador { flex: 1; }
+
+.marca { display: flex; align-items: center; gap: 8px; }
+
+/* El logo lleva su fondo recortado, así que se apoya en la superficie tal cual
+   y funciona igual en claro que en oscuro. */
+.marca-logo { object-fit: contain; flex: none; }
+
+.marca-entrada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
 }
+
+.marca-entrada img { object-fit: contain; }
 
 .contenido {
   overflow-y: auto;
@@ -199,8 +211,6 @@ p { margin: 0; }
   padding: 24px;
   box-shadow: var(--sombra);
 }
-
-.marca { display: flex; align-items: center; gap: 8px; }
 
 label {
   font-size: 0.85rem;

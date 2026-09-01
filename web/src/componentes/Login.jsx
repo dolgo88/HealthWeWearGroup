@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { llamar, urlFijadaEnCompilacion } from '../lib/api.js';
+import Marca from './Marca.jsx';
 
 export default function Login({ alEntrar, alCambiarUrl }) {
   const [usuario, setUsuario] = useState('');
@@ -25,8 +26,13 @@ export default function Login({ alEntrar, alCambiarUrl }) {
   return (
     <main className="pantalla-centro">
       <form className="tarjeta-formulario" onSubmit={enviar}>
-        <div className="marca">
-          <span className="marca-icono" aria-hidden="true">◗</span>
+        <div className="marca-entrada">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-limpio.png`}
+            alt=""
+            width={104}
+            height={104}
+          />
           <h1>HealthWeWear</h1>
         </div>
         <p className="ayuda">Entra con tu usuario para ver tu evolución y la del grupo.</p>

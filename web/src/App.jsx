@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { borrarSesion, guardarSesion, leerSesion, llamar, urlApi } from './lib/api.js';
 import Avatar from './componentes/Avatar.jsx';
 import Configuracion from './componentes/Configuracion.jsx';
+import Marca from './componentes/Marca.jsx';
 import SelectorAvatar from './componentes/SelectorAvatar.jsx';
 import Login from './componentes/Login.jsx';
 import PanelComparar from './componentes/PanelComparar.jsx';
@@ -112,8 +113,9 @@ export default function App() {
   return (
     <div className="app">
       <header className="barra-superior">
-        <Avatar perfil={perfil} tamano={34} comoBoton alPulsar={() => setEligiendoAvatar(true)} />
-        <span className="titulo">HealthWeWear</span>
+        <Marca tamano={26} />
+        <span className="separador" />
+        <Avatar perfil={perfil} tamano={32} comoBoton alPulsar={() => setEligiendoAvatar(true)} />
         <button className="enlace" onClick={() => salir()}>Salir</button>
       </header>
 
