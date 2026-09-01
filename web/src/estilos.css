@@ -555,6 +555,66 @@ code {
 .ficha.activa { color: var(--ink-1); font-weight: 600; }
 
 /* ------------------------------------------------------------------ */
+/*  Reacción al guardar el peso                                        */
+/* ------------------------------------------------------------------ */
+
+.reaccion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radio);
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--ink-3);
+  background: var(--elevado);
+  animation: asomar 0.28s ease-out;
+}
+
+.reaccion-cara { font-size: 1.9rem; line-height: 1; flex: none; }
+.reaccion strong { display: block; font-size: 1rem; }
+.reaccion-detalle { display: block; font-size: 0.82rem; color: var(--ink-2); margin-top: 2px; }
+
+.reaccion-baja  { border-left-color: var(--estado-good); }
+.reaccion-sube  { border-left-color: var(--estado-critical); }
+.reaccion-igual { border-left-color: var(--eje); }
+
+@keyframes asomar {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/*  El equipo                                                          */
+/* ------------------------------------------------------------------ */
+
+.equipo { border-left: 4px solid var(--acento); }
+
+.equipo-cifras {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.equipo-meta { text-align: right; }
+
+.equipo-valor {
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.equipo-valor.secundario { font-size: 1.4rem; color: var(--ink-2); }
+
+.equipo-unidad {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-left: 3px;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Constancia                                                         */
 /* ------------------------------------------------------------------ */
 

@@ -287,6 +287,73 @@ function calcularObjetivo(perfil, ultimo, tendencia, referencia) {
 }
 
 /* ---------------------------------------------------------------- */
+/*  El grupo como una sola persona                                   */
+/* ---------------------------------------------------------------- */
+
+/**
+ * Suma los pesos del grupo para tratarlo como un único cuerpo con un único
+ * objetivo.
+ *
+ * Sólo entran quienes tienen alguna medición: alguien sin datos sumaría cero
+ * y haría parecer que el equipo pesa menos de lo que pesa. Y el objetivo
+ * conjunto sólo suma a quienes lo tengan puesto, así que se informa aparte de
+ * cuántos faltan por ponerlo, para que la cifra no se lea como completa
+ * cuando no lo es.
+ */
+export function resumenEquipo(usuarios, mediciones, referencia = hoyIso()) {
+  const miembros = usuarios
+    .map((u) => resumenDe(u, mediciones, referencia))
+    .filter((r) => !r.sinDatos);
+
+  if (!miembros.length) return { sinDatos: true, miembros: [] };
+
+  const suma = (f) => miembros.reduce((a, r) => a + (f(r) ?? 0), 0);
+
+  const conObjetivo = miembros.filter((r) => r.perfil.peso_objetivo_kg);
+  const objetivo = conObjetivo.reduce((a, r) => a + r.perfil.peso_objetivo_kg, 0);
+
+  const actual = suma((r) => r.pesoActual);
+  const inicial = suma((r) => r.pesoInicial);
+
+  // El progreso se mide sólo sobre quienes tienen objetivo: mezclar a los
+  // demás repartiría su bajada en una meta que no existe.
+  const actualConObjetivo = conObjetivo.reduce((a, r) => a + r.pesoActual, 0);
+  const inicialConObjetivo = conObjetivo.reduce((a, r) => a + r.pesoInicial, 0);
+  const recorrido = inicialConObjetivo - objetivo;
+
+  return {
+    sinDatos: false,
+    miembros,
+    total: miembros.length,
+
+    pesoActual: actual,
+    pesoInicial: inicial,
+    cambioTotal: actual - inicial,
+
+    // Sólo cuenta a quien tenga medición en esa ventana, no se inventa nada.
+    cambio7:  sumaParcial(miembros, (r) => r.cambio7),
+    cambio30: sumaParcial(miembros, (r) => r.cambio30),
+
+    objetivo: conObjetivo.length ? objetivo : null,
+    conObjetivo: conObjetivo.length,
+    sinObjetivo: miembros.filter((r) => !r.perfil.peso_objetivo_kg).map((r) => r.perfil.nombre),
+    restante: conObjetivo.length ? actualConObjetivo - objetivo : null,
+    progreso: conObjetivo.length && Math.abs(recorrido) > 0.01
+      ? (inicialConObjetivo - actualConObjetivo) / recorrido
+      : null,
+
+    tendenciaSemanal: sumaParcial(miembros, (r) => r.tendencia?.kgPorSemana)
+  };
+}
+
+/** Suma ignorando a quien no tenga ese dato, y avisa de cuántos ha sumado. */
+function sumaParcial(miembros, extraer) {
+  const valores = miembros.map(extraer).filter((v) => v !== null && v !== undefined);
+  if (!valores.length) return null;
+  return { valor: valores.reduce((a, v) => a + v, 0), de: valores.length, total: miembros.length };
+}
+
+/* ---------------------------------------------------------------- */
 /*  Comparación entre personas                                       */
 /* ---------------------------------------------------------------- */
 

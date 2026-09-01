@@ -241,6 +241,15 @@ quiera, y aparece en el saludo, en la comparación y en la tabla del grupo.
 **Grupo** — Es la pestaña que se abre al entrar: la comparación con el resto,
 porque lo primero que apetece ver es cómo va cada uno.
 
+Arriba, **el grupo como una sola persona**: la suma de los pesos actuales, la
+suma de los objetivos y cuánto os falta entre todos. Dos matices de cómo se
+calcula, para que la cifra no engañe: sólo entra quien tenga alguna medición
+—quien no la tenga sumaría cero y haría parecer que el equipo pesa menos—, y el
+objetivo conjunto sólo suma a quienes lo tengan puesto en la hoja, avisando de
+a quién le falta. El progreso se mide únicamente sobre esos mismos, porque
+repartir la bajada de alguien sin objetivo en una meta que no existe daría un
+porcentaje inventado.
+
 **Constancia** — El trato del grupo son **2 días de ejercicio por semana**. Si una
 semana no llegas a dos, la siguiente te pide **3**. El recargo dura sólo esa
 semana: lo que decide el requisito de la siguiente es si hiciste dos o más, no si
@@ -256,7 +265,12 @@ El juicio es siempre sobre el **ejercicio**, que es una conducta que depende de
 ti. Nunca sobre el peso ni sobre el cuerpo, que no responden a un tirón de orejas
 y donde una app no tiene nada que reprochar.
 
-**Hoy** — Registro del día: peso, ejercicio (sí/no) y una nota. Arranca con tu
+**Hoy** — Registro del día: peso, ejercicio (sí/no) y una nota. Al guardar, la
+app reacciona comparando con **la medición anterior a ese día** —no con la última
+de todas, para que corregir un día pasado responda a lo que pasó entonces—: un
+corazón y «Seguí así» si has bajado, una cara triste y «Me has decepcionado» si
+has subido. Medio hectogramo de margen en ambos sentidos, porque una báscula no
+repite el mismo número dos veces seguidas. Arranca con tu
 último peso conocido, así que normalmente sólo corriges décimas. Puedes registrar
 días pasados y corregir o borrar cualquier día: una persona tiene como mucho una
 medición por día, y volver a guardar la sobrescribe.

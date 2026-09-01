@@ -1,8 +1,41 @@
 import { useEffect, useState } from 'react';
 import { llamar } from '../lib/api.js';
-import { formatoLargo, formatoRelativo, hoyIso } from '../lib/fechas.js';
+import { formatoCorto, formatoLargo, formatoRelativo, hoyIso } from '../lib/fechas.js';
 import { serieDe } from '../lib/metricas.js';
 import Avatar from './Avatar.jsx';
+
+/**
+ * Compara con la medición anterior a ese día —no con la última de todas—,
+ * para que corregir un día pasado reaccione a lo que de verdad pasó entonces.
+ * Medio hectogramo de margen: la báscula no repite el mismo número dos veces.
+ */
+function reaccionAlPeso(mediciones, usuario, fecha, peso) {
+  const previas = mediciones
+    .filter((m) => m.usuario === usuario && m.fecha < fecha)
+    .sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
+
+  const anterior = previas[previas.length - 1];
+  if (!anterior) {
+    return {
+      tipo: 'inicio',
+      cara: '👋',
+      frase: 'Primera medición guardada',
+      detalle: 'A partir de aquí ya hay con qué comparar.'
+    };
+  }
+
+  const diferencia = peso - anterior.peso_kg;
+  const kg = Math.abs(diferencia).toFixed(1);
+  const desde = `respecto a los ${anterior.peso_kg.toFixed(1)} kg del ${formatoCorto(anterior.fecha)}`;
+
+  if (diferencia <= -0.05) {
+    return { tipo: 'baja', cara: '❤️', frase: 'Seguí así', detalle: `${kg} kg menos ${desde}.` };
+  }
+  if (diferencia >= 0.05) {
+    return { tipo: 'sube', cara: '😢', frase: 'Me has decepcionado', detalle: `${kg} kg más ${desde}.` };
+  }
+  return { tipo: 'igual', cara: '➖', frase: 'Sin cambios', detalle: `El mismo peso ${desde}.` };
+}
 
 /** Registro diario: peso, si se ha hecho ejercicio y una nota opcional. */
 export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
@@ -12,6 +45,7 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
   const [nota, setNota] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [aviso, setAviso] = useState(null);
+  const [reaccion, setReaccion] = useState(null);
 
   const perfil = datos.usuarios.find((u) => u.usuario === sesion.usuario.usuario) ?? sesion.usuario;
   const serie = serieDe(datos.mediciones, sesion.usuario.usuario);
@@ -34,6 +68,13 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fecha, datos.mediciones]);
 
+  /*
+   * La reacción se borra sólo al cambiar de día, no cuando llegan datos
+   * nuevos: si dependiera de las mediciones, el refresco que provoca el
+   * propio guardado la haría desaparecer en el mismo instante en que se pone.
+   */
+  useEffect(() => { setReaccion(null); }, [fecha]);
+
   async function guardar(evento) {
     evento.preventDefault();
     setAviso(null);
@@ -53,11 +94,12 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
         ejercicio,
         nota
       });
-      alRefrescar(respuesta.datos);
+      alRefrescar(respuesta.datos, respuesta.token);
       setAviso({
         tipo: 'ok',
         texto: respuesta.actualizado ? 'Medición actualizada.' : 'Medición guardada.'
       });
+      setReaccion(reaccionAlPeso(respuesta.datos.mediciones, sesion.usuario.usuario, fecha, valor));
     } catch (err) {
       if (err.sesionCaducada) alError(err);
       else setAviso({ tipo: 'error', texto: err.message });
@@ -71,7 +113,8 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
     setGuardando(true);
     try {
       const respuesta = await llamar('borrar', { token: sesion.token, fecha });
-      alRefrescar(respuesta.datos);
+      alRefrescar(respuesta.datos, respuesta.token);
+      setReaccion(null);
       setAviso({ tipo: 'ok', texto: 'Medición borrada.' });
     } catch (err) {
       if (err.sesionCaducada) alError(err);
@@ -159,7 +202,17 @@ export default function PanelHoy({ sesion, datos, alRefrescar, alError }) {
           maxLength={200}
         />
 
-        {aviso && (
+        {reaccion && (
+          <div className={`reaccion reaccion-${reaccion.tipo}`} role="status">
+            <span className="reaccion-cara" aria-hidden="true">{reaccion.cara}</span>
+            <div>
+              <strong>{reaccion.frase}</strong>
+              {reaccion.detalle && <span className="reaccion-detalle">{reaccion.detalle}</span>}
+            </div>
+          </div>
+        )}
+
+        {aviso && !reaccion && (
           <p className={aviso.tipo === 'ok' ? 'exito' : 'error'} role="status">
             {aviso.texto}
           </p>

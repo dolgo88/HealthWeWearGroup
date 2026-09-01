@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { borrarSesion, guardarSesion, leerSesion, llamar, urlApi } from './lib/api.js';
 import Avatar from './componentes/Avatar.jsx';
 import Configuracion from './componentes/Configuracion.jsx';
@@ -59,18 +59,27 @@ export default function App() {
     });
   }, []);
 
+  /*
+   * El token se lee de una referencia, no de las dependencias del efecto.
+   * Como el servidor devuelve uno nuevo en cada refresco, depender de él
+   * encadenaría un refresco tras otro sin parar.
+   */
+  const tokenActual = useRef(sesion?.token);
+  useEffect(() => { tokenActual.current = sesion?.token; }, [sesion?.token]);
+
   // Al abrir la app se recargan los datos: la hoja puede haber cambiado a mano.
+  const usuarioActivo = sesion?.usuario?.usuario ?? null;
   useEffect(() => {
-    if (!sesion) return;
+    if (!usuarioActivo) return undefined;
     let cancelado = false;
     setRefrescando(true);
-    llamar('datos', { token: sesion.token })
+    llamar('datos', { token: tokenActual.current })
       .then((r) => { if (!cancelado) refrescar(r.datos, r.token); })
       .catch((e) => { if (!cancelado) alError(e); })
       .finally(() => { if (!cancelado) setRefrescando(false); });
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sesion?.token]);
+  }, [usuarioActivo]);
 
   if (ajustandoUrl) {
     return <Configuracion alGuardar={() => setAjustandoUrl(false)} />;
