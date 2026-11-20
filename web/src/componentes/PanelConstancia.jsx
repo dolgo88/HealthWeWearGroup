@@ -1,14 +1,12 @@
 import { estadoConstancia, mensajeConstancia, MINIMO_CON_RECARGO, MINIMO_SEMANAL } from '../lib/constancia.js';
 import { formatoCorto } from '../lib/fechas.js';
 import { serieDe } from '../lib/metricas.js';
-import { useColorDeSerie } from '../lib/paleta.js';
 import Avatar from './Avatar.jsx';
 import { Barra } from './Tarjeta.jsx';
 
 const SEMANAS_VISIBLES = 12;
 
 export default function PanelConstancia({ sesion, datos }) {
-  const adaptarColor = useColorDeSerie();
   const perfil = datos.usuarios.find((u) => u.usuario === sesion.usuario.usuario) ?? sesion.usuario;
   const estado = estadoConstancia(serieDe(datos.mediciones, perfil.usuario));
   const mensaje = mensajeConstancia(estado, perfil.nombre);
@@ -35,7 +33,6 @@ export default function PanelConstancia({ sesion, datos }) {
             <Barra
               proporcion={estado.actual.sesiones / estado.actual.requerido}
               etiqueta={`${estado.actual.sesiones} de ${estado.actual.requerido} días`}
-              color={adaptarColor(perfil.color)}
             />
             <p className="ayuda pequena">
               {estado.actual.cumplida

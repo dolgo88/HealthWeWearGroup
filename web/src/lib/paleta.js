@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 /**
  * Paleta categórica. El orden es el mecanismo de seguridad para daltonismo:
@@ -28,24 +28,14 @@ export function colorDeSerie(hex, oscuro) {
   return EQUIVALENTES.get(String(hex).toLowerCase()) ?? hex;
 }
 
-/** Sigue en vivo el ajuste del sistema: si cambia, el gráfico se repinta. */
-export function useModoOscuro() {
-  const [oscuro, setOscuro] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-
-  useEffect(() => {
-    const consulta = window.matchMedia('(prefers-color-scheme: dark)');
-    const alCambiar = (e) => setOscuro(e.matches);
-    consulta.addEventListener('change', alCambiar);
-    return () => consulta.removeEventListener('change', alCambiar);
-  }, []);
-
-  return oscuro;
-}
-
-/** Devuelve una función que adapta cualquier color de perfil al modo actual. */
+/**
+ * El tema de la app es de luz: el lienzo es pergamino y no hay variante
+ * oscura, así que las series usan siempre sus escalones claros. Seguir el
+ * ajuste del sistema pintaría los escalones oscuros sobre un fondo claro,
+ * que es justo lo que el escalonado existe para evitar.
+ *
+ * PALETA_OSCURA se conserva por si algún día se añade un tema oscuro.
+ */
 export function useColorDeSerie() {
-  const oscuro = useModoOscuro();
-  return useCallback((hex) => colorDeSerie(hex, oscuro), [oscuro]);
+  return useCallback((hex) => colorDeSerie(hex, false), []);
 }

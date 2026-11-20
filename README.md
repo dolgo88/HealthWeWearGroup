@@ -299,6 +299,48 @@ Debajo, una tabla del grupo ordenada por quién más ha bajado en 30 días.
 
 ---
 
+## El tema visual
+
+La app usa un tema editorial de luz cálida: el lienzo es **pergamino**
+(`#f2f0eb`), no blanco; el texto es **tinta cálida** (`#292827`), no negro; y el
+color está reservado para puntuar, no para decorar. Los titulares van al **peso
+460** con el tracking ceñido —a ese peso un titular grande se lee como seguro,
+no como fino, porque el pergamino da contraste de sobra—. La profundidad viene
+de bordes de un píxel y del salto entre superficies: **no hay ni una sombra** en
+toda la app.
+
+| Rol | Color | Dónde |
+|---|---|---|
+| Acción principal | `#421d24` vino | El único relleno cromático: botones de acción y barras de progreso |
+| Enlaces | `#714cb6` violeta | Sólo enlaces dentro del contenido, nunca un botón ni un icono |
+| Seleccionado | `#d4c7ff` lila | Pestaña activa, filtro elegido, semana en curso |
+| Lienzo / tarjetas | `#f2f0eb` / `#ffffff` | Las tarjetas se levantan del pergamino, no al revés |
+
+Tres decisiones que conviene conocer porque se apartan de la letra del tema:
+
+**Es un tema de luz, y la app ya no tiene modo oscuro.** El sistema está definido
+sobre pergamino; seguir el ajuste del sistema pintaría los escalones oscuros de
+las series sobre un fondo claro, que es justo lo que ese escalonado existe para
+evitar. La paleta oscura sigue en el código por si algún día se añade.
+
+**Los colores de estado se quedan, templados.** El tema prohíbe acentos azules,
+verdes o rojos, pero eso habla de acento de marca: verde y rojo aquí son
+significado —cumplido, fallado, subiste de peso— y siempre van con texto al lado.
+Se han movido hacia la gama cálida del sistema (`#2d6a3f`, `#8a5a00`, `#a0421c`,
+`#8c2f2f`) y comprobado sobre pergamino y sobre blanco: todos pasan de 5:1 como
+texto.
+
+**Las series de los gráficos mantienen su paleta.** Son identidad de datos, no
+cromo de interfaz, y su orden está validado para daltonismo; cambiarla por la
+gama del tema rompería esa garantía. Revalidada contra las dos superficies
+nuevas: las seis comprobaciones siguen pasando. El color de cada persona vive en
+su línea del gráfico y en el aro de su avatar —no en las barras de progreso, que
+son cromo y van en vino.
+
+**Tipografía:** Super Sans VF es propietaria, así que la sustituye **Inter**, la
+variable abierta más cercana, que cubre el peso 460. Si no carga, el tipo del
+sistema deja la app perfectamente usable.
+
 ## Decisiones de diseño
 
 **Nada de dobles ejes.** Comparar pesos muy distintos se resuelve indexando cada

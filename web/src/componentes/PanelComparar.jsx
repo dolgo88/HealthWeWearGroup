@@ -111,7 +111,6 @@ export default function PanelComparar({ sesion, datos }) {
                     ? `Os quedan ${equipo.restante.toFixed(1)} kg entre todos`
                     : '¡Objetivo conjunto alcanzado!'
                 }
-                color="var(--acento)"
               />
               <p className="ayuda pequena">
                 Contando desde que empezasteis, habéis recorrido esa parte del camino

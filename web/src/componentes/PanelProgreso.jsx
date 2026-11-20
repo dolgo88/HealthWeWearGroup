@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { formatoCorto, formatoRelativo } from '../lib/fechas.js';
 import { mediaMovil, recortarDesde, resumenDe } from '../lib/metricas.js';
-import { useColorDeSerie } from '../lib/paleta.js';
 import GraficoLineas from './GraficoLineas.jsx';
 import TablaDatos from './TablaDatos.jsx';
 import { Barra, Delta, Tarjeta } from './Tarjeta.jsx';
@@ -15,7 +14,6 @@ const RANGOS = [
 
 export default function PanelProgreso({ sesion, datos }) {
   const [rango, setRango] = useState(90);
-  const adaptarColor = useColorDeSerie();
 
   const perfil = datos.usuarios.find((u) => u.usuario === sesion.usuario.usuario) ?? sesion.usuario;
   const r = resumenDe(perfil, datos.mediciones);
@@ -134,12 +132,10 @@ export default function PanelProgreso({ sesion, datos }) {
         <Barra
           proporcion={r.proporcionEjercicio}
           etiqueta={`Días con ejercicio (${r.diasEjercicio30} de ${r.diasRegistrados30} registrados)`}
-          color={adaptarColor(perfil.color)}
         />
         <Barra
           proporcion={r.constancia}
           etiqueta={`Días que te has pesado en el último mes`}
-          color={adaptarColor(perfil.color)}
         />
       </div>
 
@@ -153,7 +149,6 @@ export default function PanelProgreso({ sesion, datos }) {
               <Barra
                 proporcion={progresoHaciaMeta(r)}
                 etiqueta={`Te ${r.objetivo.restante > 0 ? 'quedan' : 'faltan'} ${Math.abs(r.objetivo.restante).toFixed(1)} kg`}
-                color={adaptarColor(perfil.color)}
               />
               <p className="ayuda pequena">
                 {r.objetivo.fechaEstimada

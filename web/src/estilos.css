@@ -1,68 +1,73 @@
 /* ------------------------------------------------------------------ */
-/*  Tokens                                                             */
-/*  Paleta validada para daltonismo (ver README). Todo el color se     */
-/*  define aquí por rol; los componentes nunca escriben un hex.        */
+/*  Tokens — tema "Superhuman"                                         */
+/*                                                                     */
+/*  Sistema editorial de luz cálida: lienzo pergamino en vez de        */
+/*  blanco, tinta cálida en vez de negro, y el color reservado para    */
+/*  puntuar — vino en la acción principal, violeta sólo en enlaces,    */
+/*  lila en lo seleccionado. La profundidad viene de bordes finos y    */
+/*  del contraste entre superficies, nunca de sombras.                 */
+/*                                                                     */
+/*  Es un tema de luz, a propósito: no hay variante oscura.            */
+/*  Los componentes nunca escriben un hex; todo el color es un rol.    */
 /* ------------------------------------------------------------------ */
 
 :root {
   color-scheme: light;
 
-  --plano:      #f9f9f7;
-  --superficie: #fcfcfb;
+  /* Superficies */
+  --plano:      #f2f0eb;  /* lienzo pergamino, la superficie dominante */
+  --superficie: #ffffff;  /* tarjetas, que se levantan del lienzo */
   --elevado:    #ffffff;
+  --lila:       #d4c7ff;  /* superficie de acento: seleccionado y secundario */
+  --vino:       #421d24;  /* el único relleno cromático de acción */
 
-  --ink-1: #0b0b0b;
-  --ink-2: #52514e;
-  --ink-3: #898781;
+  /* Tinta */
+  --ink-1: #292827;  /* tinta cálida: nunca #000 */
+  --ink-2: #666666;  /* el único gris medio del sistema */
+  --ink-3: #666666;
 
-  --rejilla: #e1e0d9;
-  --eje:     #c3c2b7;
-  --borde:   rgba(11, 11, 11, 0.10);
+  /* Líneas */
+  --rejilla: #e3e3e2;
+  --eje:     #e3e3e2;
+  --borde:   #e3e3e2;
 
-  --acento:      #2a78d6;
-  --acento-ink:  #ffffff;
-  --acento-lavado: rgba(42, 120, 214, 0.10);
+  /* Acentos */
+  --acento:        var(--vino);
+  --acento-ink:    #ffffff;
+  --acento-lavado: #d4c7ff;
+  --enlace:        #714cb6;  /* violeta: reservado a enlaces, nada más */
 
-  --estado-good:     #006300;
+  /*
+   * Estados. El tema prohíbe acentos azules, verdes o rojos, pero esto
+   * no es acento de marca: es significado, y siempre va acompañado de
+   * texto. Los tonos están templados hacia la gama cálida del sistema y
+   * comprobados sobre pergamino y sobre blanco (todos ≥ 5:1 como texto).
+   */
+  --estado-good:     #2d6a3f;
   --estado-warning:  #8a5a00;
   --estado-serious:  #a0421c;
-  --estado-critical: #a32222;
-  --estado-neutro:   #52514e;
+  --estado-critical: #8c2f2f;
+  --estado-neutro:   #666666;
 
-  --radio:   12px;
+  /* Formas */
+  --radio:   16px;
   --radio-s: 8px;
-  --sombra:  0 1px 2px rgba(11, 11, 11, 0.05);
+  --radio-pastilla: 999px;
 
-  --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
+  /* Sin sombras: la profundidad la dan los bordes y las superficies. */
+  --sombra: none;
 
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme='light'])) {
-    color-scheme: dark;
+  /*
+   * Inter sustituye a Super Sans VF, que es propietaria: es la variable
+   * abierta más cercana y admite el peso 460 del tema.
+   */
+  --fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-    --plano:      #0d0d0d;
-    --superficie: #1a1a19;
-    --elevado:    #232322;
-
-    --ink-1: #ffffff;
-    --ink-2: #c3c2b7;
-    --ink-3: #898781;
-
-    --rejilla: #2c2c2a;
-    --eje:     #383835;
-    --borde:   rgba(255, 255, 255, 0.10);
-
-    --acento:        #3987e5;
-    --acento-lavado: rgba(57, 135, 229, 0.16);
-
-    --estado-good:     #0ca30c;
-    --estado-warning:  #fab219;
-    --estado-serious:  #ec835a;
-    --estado-critical: #e66767;
-    --estado-neutro:   #c3c2b7;
-
-    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
-  }
+  /* El peso 460 es la voz del sistema: los titulares no gritan. */
+  --peso-titular: 460;
+  --peso-cuerpo:  460;
+  --peso-enfasis: 540;
+  --peso-fuerte:  700;
 }
 
 /* ------------------------------------------------------------------ */
@@ -83,10 +88,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { line-height: 1.25; margin: 0; }
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.3rem; }
-h3 { font-size: 1rem; letter-spacing: 0.01em; }
+/*
+ * Peso 460 en todos los titulares, con el tracking ceñido que pide el
+ * tema en los tamaños grandes. A 460 un titular se lee como seguro, no
+ * como fino, porque el pergamino da contraste de sobra.
+ */
+h1, h2, h3 {
+  margin: 0;
+  font-weight: var(--peso-titular);
+  color: var(--ink-1);
+}
+
+h1 { font-size: 1.75rem; line-height: 1.14; letter-spacing: -0.022em; }
+h2 { font-size: 1.5rem;  line-height: 1.2;  letter-spacing: -0.018em; }
+h3 { font-size: 1.05rem; line-height: 1.3;  letter-spacing: -0.008em; }
 
 p { margin: 0; }
 
@@ -109,16 +124,27 @@ p { margin: 0; }
   background: var(--plano);
 }
 
+/* Transparente con desenfoque: el contenido pasa por debajo y se insinúa,
+   que es de donde saca profundidad este tema en vez de sombras. */
 .barra-superior {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: var(--superficie);
+  background: color-mix(in srgb, var(--plano) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--borde);
 }
 
-.barra-superior .titulo { font-weight: 600; }
+/* En la cabecera, Salir es una acción terciaria: tinta, no violeta.
+   El violeta queda para los enlaces dentro del contenido. */
+.barra-superior button.enlace { color: var(--ink-1); }
+
+.barra-superior .titulo {
+  font-weight: var(--peso-enfasis);
+  letter-spacing: -0.012em;
+}
 
 .barra-superior .separador { flex: 1; }
 
@@ -150,7 +176,9 @@ p { margin: 0; }
 .barra-inferior {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  background: var(--superficie);
+  background: color-mix(in srgb, var(--plano) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--borde);
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -171,7 +199,15 @@ p { margin: 0; }
 }
 
 .barra-inferior button span { font-size: 1.05rem; line-height: 1.1; }
-.barra-inferior button.activo { color: var(--acento); font-weight: 600; }
+/* Lo seleccionado se marca con la superficie lila; el violeta del tema
+   está reservado a los enlaces y no se usa aquí. */
+.barra-inferior button.activo { color: var(--ink-1); font-weight: var(--peso-enfasis); }
+
+.barra-inferior button.activo span {
+  background: var(--lila);
+  border-radius: var(--radio-pastilla);
+  padding: 2px 14px;
+}
 
 .pantalla-centro {
   display: flex;
@@ -192,7 +228,6 @@ p { margin: 0; }
   border: 1px solid var(--borde);
   border-radius: var(--radio);
   padding: 16px;
-  box-shadow: var(--sombra);
 }
 
 /* ------------------------------------------------------------------ */
@@ -208,8 +243,7 @@ p { margin: 0; }
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
-  padding: 24px;
-  box-shadow: var(--sombra);
+  padding: 32px 24px;
 }
 
 label {
@@ -222,13 +256,15 @@ label {
 input, select {
   font: inherit;
   color: var(--ink-1);
-  background: var(--elevado);
-  border: 1px solid var(--eje);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
   border-radius: var(--radio-s);
   padding: 12px;
   width: 100%;
   min-height: 48px;
 }
+
+input:focus { border-color: var(--ink-1); }
 
 input::placeholder { color: var(--ink-3); }
 
@@ -252,7 +288,8 @@ fieldset.interruptor legend {
 .segmentado, .filtros {
   display: flex;
   gap: 4px;
-  background: var(--acento-lavado);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
   border-radius: var(--radio-s);
   padding: 4px;
 }
@@ -271,20 +308,20 @@ fieldset.interruptor legend {
 }
 
 .segmentado button.activo, .filtros button.activo {
-  background: var(--acento);
-  color: var(--acento-ink);
-  font-weight: 600;
+  background: var(--lila);
+  color: var(--ink-1);
+  font-weight: var(--peso-enfasis);
 }
 
 button.principal {
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--peso-enfasis);
   margin-top: 12px;
   padding: 14px;
   min-height: 50px;
   border: 0;
-  border-radius: var(--radio-s);
-  background: var(--acento);
+  border-radius: var(--radio);
+  background: var(--vino);
   color: var(--acento-ink);
   cursor: pointer;
 }
@@ -296,12 +333,15 @@ button.enlace {
   font-size: 0.9rem;
   background: none;
   border: 0;
-  color: var(--acento);
+  color: var(--enlace);
   cursor: pointer;
   padding: 8px 4px;
   text-align: left;
   min-height: 40px;
+  transition: text-decoration-color 0.2s ease;
 }
+
+button.enlace:hover { text-decoration: underline; }
 
 button.enlace.centrado { text-align: center; }
 button.enlace.peligro { color: var(--estado-critical); }
@@ -319,14 +359,14 @@ button.enlace.peligro { color: var(--estado-critical); }
 .exito   { color: var(--estado-good);     font-size: 0.9rem; }
 
 .banda {
-  background: var(--acento-lavado);
+  background: var(--lila);
   color: var(--ink-1);
   padding: 10px 16px;
   font-size: 0.9rem;
 }
 
 .banda-aviso {
-  background: var(--acento-lavado);
+  background: var(--lila);
   border-left: 3px solid var(--estado-warning);
   color: var(--ink-1);
   font-size: 0.88rem;
@@ -335,14 +375,14 @@ button.enlace.peligro { color: var(--estado-critical); }
 }
 
 .ayuda-larga { font-size: 0.85rem; color: var(--ink-2); margin-top: 8px; }
-.ayuda-larga summary { cursor: pointer; color: var(--acento); }
+.ayuda-larga summary { cursor: pointer; color: var(--enlace); }
 .ayuda-larga ol { padding-left: 20px; margin: 8px 0 0; }
 .ayuda-larga li { margin-bottom: 6px; }
 
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.85em;
-  background: var(--acento-lavado);
+  background: var(--lila);
   padding: 1px 4px;
   border-radius: 4px;
 }
@@ -355,15 +395,15 @@ code {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
-  padding: 18px 16px;
-  box-shadow: var(--sombra);
+  padding: 24px 20px;
 }
 
+/* 48px al peso 460 con tracking -1.8px: la firma del tema. */
 .hero-valor {
   font-size: 3rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  font-weight: var(--peso-titular);
+  line-height: 0.96;
+  letter-spacing: -0.028em;
 }
 
 .hero-unidad {
@@ -389,24 +429,24 @@ code {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
-  padding: 12px 14px;
-  box-shadow: var(--sombra);
+  padding: 14px;
 }
 
 .tarjeta-ancha { grid-column: 1 / -1; }
 
 .tarjeta-etiqueta {
   font-size: 0.75rem;
-  color: var(--ink-3);
+  color: var(--ink-2);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .tarjeta-valor {
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: var(--peso-titular);
   line-height: 1.2;
-  margin-top: 2px;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
 }
 
 .tarjeta-unidad {
@@ -448,7 +488,11 @@ code {
   overflow: hidden;
 }
 
-.barra-relleno { height: 100%; border-radius: 999px; }
+.barra-relleno {
+  height: 100%;
+  border-radius: var(--radio-pastilla);
+  background: var(--vino);
+}
 
 /* ------------------------------------------------------------------ */
 /*  Gráfico                                                            */
@@ -499,11 +543,10 @@ code {
 .tooltip {
   position: absolute;
   top: 8px;
-  background: var(--elevado);
+  background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radio-s);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
-  padding: 8px 10px;
+  padding: 10px 12px;
   font-size: 0.8rem;
   pointer-events: none;
   min-width: 130px;
@@ -555,14 +598,14 @@ code {
   font-size: 0.9rem;
   background: var(--superficie);
   color: var(--ink-2);
-  border: 1px solid var(--eje);
-  border-radius: 999px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-pastilla);
   padding: 9px 14px;
   min-height: 44px;
   cursor: pointer;
 }
 
-.ficha.activa { color: var(--ink-1); font-weight: 600; }
+.ficha.activa { color: var(--ink-1); font-weight: var(--peso-enfasis); background: var(--lila); }
 
 /* ------------------------------------------------------------------ */
 /*  Reacción al guardar el peso                                        */
@@ -572,11 +615,11 @@ code {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px;
   border-radius: var(--radio);
   border: 1px solid var(--borde);
-  border-left: 4px solid var(--ink-3);
-  background: var(--elevado);
+  border-left: 4px solid var(--ink-2);
+  background: var(--superficie);
   animation: asomar 0.28s ease-out;
 }
 
@@ -597,7 +640,7 @@ code {
 /*  El equipo                                                          */
 /* ------------------------------------------------------------------ */
 
-.equipo { border-left: 4px solid var(--acento); }
+.equipo { border-left: 4px solid var(--vino); }
 
 .equipo-cifras {
   display: flex;
@@ -610,9 +653,9 @@ code {
 
 .equipo-valor {
   font-size: 2.1rem;
-  font-weight: 700;
+  font-weight: var(--peso-titular);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.027em;
 }
 
 .equipo-valor.secundario { font-size: 1.4rem; color: var(--ink-2); }
@@ -633,10 +676,9 @@ code {
 .veredicto {
   background: var(--superficie);
   border: 1px solid var(--borde);
-  border-left: 4px solid var(--ink-3);
+  border-left: 4px solid var(--ink-2);
   border-radius: var(--radio);
-  padding: 14px 16px;
-  box-shadow: var(--sombra);
+  padding: 18px;
 }
 
 .veredicto h3 { font-size: 1.05rem; margin-bottom: 4px; }
@@ -670,11 +712,20 @@ code {
 .semana-cuenta { font-size: 0.8rem; font-variant-numeric: tabular-nums; color: var(--ink-1); }
 .semana-fecha  { font-size: 0.68rem; color: var(--ink-3); }
 
+/* El lila es la superficie de "seleccionado": aquí eso es la semana en
+   curso. Pintar de lila también las cumplidas lo convertía en decoración
+   y hacía ilegible qué semana es la viva. El cumplimiento lo llevan la
+   marca y el recuento, que es información, no color. */
 .semana.cumplida .semana-marca { color: var(--estado-good); }
 .semana.fallada  .semana-marca { color: var(--estado-critical); }
 .semana.fallada  { background: var(--plano); }
-.semana.en-curso { border-color: var(--acento); border-style: dashed; }
-.semana.en-curso .semana-marca { color: var(--acento); }
+
+.semana.en-curso {
+  background: var(--lila);
+  border-color: var(--ink-1);
+}
+
+.semana.en-curso .semana-marca { color: var(--ink-1); }
 
 .lista-grupo { list-style: none; margin: 0; padding: 0; }
 
@@ -772,7 +823,6 @@ code {
   position: sticky;
   bottom: 0;
   margin-top: 14px;
-  box-shadow: 0 -8px 12px -8px rgba(0, 0, 0, 0.25);
 }
 
 .acciones-avatar { display: flex; gap: 8px; }
@@ -817,8 +867,8 @@ code {
 }
 
 .rejilla-emojis .emoji.activo {
-  border-color: var(--acento);
-  background: var(--acento-lavado);
+  border-color: var(--ink-1);
+  background: var(--lila);
 }
 
 .fila-personalizado { display: flex; gap: 8px; align-items: center; }
@@ -864,7 +914,7 @@ th[scope='row'], thead th:first-child {
 
 th[scope='row'] { display: flex; align-items: center; gap: 8px; }
 
-tr.fila-propia { background: var(--acento-lavado); }
+tr.fila-propia { background: var(--lila); }
 
 .nota-tabla { font-size: 0.75rem; color: var(--ink-3); margin-top: 8px; }
 

@@ -34,7 +34,13 @@ export function Delta({ valor, decimales = 1, unidad = 'kg', invertido = true })
 }
 
 /** Barra de progreso con su valor siempre escrito al lado. */
-export function Barra({ proporcion, etiqueta, color }) {
+/*
+ * El relleno va siempre en el color de acción del tema. El color de cada
+ * persona identifica su línea en los gráficos y el aro de su avatar; usarlo
+ * también aquí lo convertiría en cromo de interfaz y metería azules y
+ * verdes en un sistema cuyo único relleno cromático es el vino.
+ */
+export function Barra({ proporcion, etiqueta }) {
   const pct = Math.round(Math.min(Math.max(proporcion, 0), 1) * 100);
   return (
     <div className="barra-bloque">
@@ -50,7 +56,7 @@ export function Barra({ proporcion, etiqueta, color }) {
         aria-valuemax={100}
         aria-label={etiqueta}
       >
-        <div className="barra-relleno" style={{ width: `${pct}%`, background: color }} />
+        <div className="barra-relleno" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
